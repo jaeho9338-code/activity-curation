@@ -6,6 +6,26 @@ import "./App.css";
 
 const GPA_OPTIONS = [4.5, 4.0, 3.5, 3.0, 2.5];
 
+// 불가 사유별로 그 자리에서 바로 고칠 수 있는 컨트롤 매핑
+const FIX = {
+  학년: { key: "grade", opts: [1, 2, 3, 4], fmt: (v) => v + "학년", parse: Number },
+  전공: { key: "major", opts: MAJORS, fmt: (v) => v, parse: String },
+  지역: { key: "region", opts: REGIONS, fmt: (v) => v, parse: String },
+  재학상태: { key: "enrollment", opts: ENROLLMENTS, fmt: (v) => v, parse: String },
+  소득분위: { key: "income", opts: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], fmt: (v) => v + "분위", parse: Number },
+  학점: { key: "gpa", opts: GPA_OPTIONS, fmt: (v) => v.toFixed(1), parse: Number },
+};
+
+function InlineFix({ label, profile, set }) {
+  const cfg = FIX[label];
+  if (!cfg) return null;
+  return (
+    <select className="fix" value={profile[cfg.key] ?? ""} onChange={(e) => set(cfg.key, cfg.parse(e.target.value))}>
+      {cfg.opts.map((o) => <option key={o} value={o}>{cfg.fmt(o)}</option>)}
+    </select>
+  );
+}
+
 export default function App() {
   // 내 조건. income·gpa는 null이면 "잘 모름" → 매칭에서 확인 필요로 처리된다.
   const [profile, setProfile] = useState({
@@ -134,13 +154,17 @@ export default function App() {
         <ul className="list">
           {ineligible.map((a) => (
             <li key={a.id} className="card muted">
-              <span className="title-muted">{a.title}</span>
+              <div className="card-top">
+                <span className="title-muted">{a.title}</span>
+                {a.failed.length === 1 && <span className="near">이것만 바꾸면 가능</span>}
+              </div>
               <ul className="reasons">
                 {a.failed.map((f) => (
                   <li key={f.label}>
                     <span className="rlabel">{f.label}</span>
                     <span className="req">요구 {f.req}</span>
                     <span className="mine">내 조건 {f.mine}</span>
+                    {a.failed.length === 1 && <InlineFix label={f.label} profile={profile} set={set} />}
                   </li>
                 ))}
               </ul>
