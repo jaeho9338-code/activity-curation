@@ -88,6 +88,7 @@ export default function App() {
               </div>
               <a className="title" href={a.url} target="_blank" rel="noopener">{a.title}</a>
               <p className="org">{a.org} · {a.source}</p>
+              <p className="evidence">근거: {a.eligibilityText}</p>
             </li>
           ))}
           {eligible.length === 0 && <li className="empty">조건에 맞는 활동이 없습니다.</li>}
@@ -105,6 +106,7 @@ export default function App() {
               </div>
               <a className="title" href={a.url} target="_blank" rel="noopener">{a.title}</a>
               <p className="note">확인 필요: {a.unknown.map((u) => `${u.label}(${u.req})`).join(", ")} — 잘 모름으로 판정 보류</p>
+              <p className="evidence">근거: {a.eligibilityText}</p>
             </li>
           ))}
           {review.length === 0 && <li className="empty">확인이 필요한 활동이 없습니다.</li>}
@@ -126,6 +128,7 @@ export default function App() {
                   </li>
                 ))}
               </ul>
+              <p className="evidence">근거: {a.eligibilityText}</p>
             </li>
           ))}
           {ineligible.length === 0 && <li className="empty">막힌 활동이 없습니다.</li>}
