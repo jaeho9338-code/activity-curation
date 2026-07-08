@@ -10,7 +10,7 @@ LLM 프롬프트와 강제할 JSON 구조를 담는다.
 
 ## 부록 1. DB 테이블 구성 (컬럼명·타입, PostgreSQL)
 
-### profiles — 내 조건
+### profiles - 내 조건
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -27,7 +27,7 @@ LLM 프롬프트와 강제할 JSON 구조를 담는다.
 | gpa | numeric(3,2) null | 직전 학기 학점 (잘 모름이면 null) |
 | updated_at | timestamptz | |
 
-### sources — 수집 소스
+### sources - 수집 소스
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | serial PK | |
@@ -36,7 +36,7 @@ LLM 프롬프트와 강제할 JSON 구조를 담는다.
 | adapter_key | text | 수집기 식별자 |
 | active | boolean | |
 
-### raw_postings — 수집 원문
+### raw_postings - 수집 원문
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -48,7 +48,7 @@ LLM 프롬프트와 강제할 JSON 구조를 담는다.
 | scraped_at | timestamptz | |
 | status | text | raw / parsing / done / failed |
 
-### postings — 완성본(유저가 조회)
+### postings - 완성본(유저가 조회)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -64,7 +64,7 @@ LLM 프롬프트와 강제할 JSON 구조를 담는다.
 | parse_status | text | curated / needs_review / failed |
 | created_at | timestamptz | |
 
-### parse_logs — 파싱 기록
+### parse_logs - 파싱 기록
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -96,7 +96,7 @@ LLM 프롬프트와 강제할 JSON 구조를 담는다.
 
 ## 부록 3. LLM 프롬프트 + 강제 JSON 구조
 
-### 1단계 Classifier — 공고 종류 분류
+### 1단계 Classifier - 공고 종류 분류
 
 프롬프트
 ```
@@ -119,7 +119,7 @@ LLM 프롬프트와 강제할 JSON 구조를 담는다.
 }
 ```
 
-### 2단계 Extractor — 조건 추출
+### 2단계 Extractor - 조건 추출
 
 프롬프트
 ```
@@ -131,7 +131,7 @@ LLM 프롬프트와 강제할 JSON 구조를 담는다.
 공고: """{raw_text}"""
 ```
 
-강제 JSON 구조 — track A(activity)
+강제 JSON 구조 - track A(activity)
 ```json
 {
   "type": "object",
@@ -150,7 +150,7 @@ LLM 프롬프트와 강제할 JSON 구조를 담는다.
 }
 ```
 
-강제 JSON 구조 — track B(scholarship)
+강제 JSON 구조 - track B(scholarship)
 ```json
 {
   "type": "object",
