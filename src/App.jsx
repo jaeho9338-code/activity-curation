@@ -13,11 +13,18 @@ export default function App() {
     major: "공학",
     region: "수도권",
     enrollment: "재학",
-    income: 5,
+    income: null,
     gpa: null,
   });
+  const [showScholarship, setShowScholarship] = useState(false);
 
   const set = (key, value) => setProfile((p) => ({ ...p, [key]: value }));
+
+  // 장학 보기 토글: 끄면 소득·학점을 잘 모름으로 되돌린다
+  const toggleScholarship = (on) => {
+    setShowScholarship(on);
+    if (!on) setProfile((p) => ({ ...p, income: null, gpa: null }));
+  };
 
   // 마감 지난 공고는 목록에서 뺀다
   const visible = ACTIVITIES.filter((a) => !isPast(a.deadline));
@@ -55,27 +62,36 @@ export default function App() {
             {ENROLLMENTS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
-        <label>
-          소득분위
-          <select
-            value={profile.income ?? ""}
-            onChange={(e) => set("income", e.target.value === "" ? null : Number(e.target.value))}
-          >
-            <option value="">잘 모름</option>
-            {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}분위</option>)}
-          </select>
-        </label>
-        <label>
-          학점
-          <select
-            value={profile.gpa ?? ""}
-            onChange={(e) => set("gpa", e.target.value === "" ? null : Number(e.target.value))}
-          >
-            <option value="">잘 모름</option>
-            {GPA_OPTIONS.map((v) => <option key={v} value={v}>{v.toFixed(1)}</option>)}
-          </select>
-        </label>
+        {showScholarship && (
+          <>
+            <label>
+              소득분위
+              <select
+                value={profile.income ?? ""}
+                onChange={(e) => set("income", e.target.value === "" ? null : Number(e.target.value))}
+              >
+                <option value="">잘 모름</option>
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}분위</option>)}
+              </select>
+            </label>
+            <label>
+              학점
+              <select
+                value={profile.gpa ?? ""}
+                onChange={(e) => set("gpa", e.target.value === "" ? null : Number(e.target.value))}
+              >
+                <option value="">잘 모름</option>
+                {GPA_OPTIONS.map((v) => <option key={v} value={v}>{v.toFixed(1)}</option>)}
+              </select>
+            </label>
+          </>
+        )}
       </section>
+
+      <label className="scholar-toggle">
+        <input type="checkbox" checked={showScholarship} onChange={(e) => toggleScholarship(e.target.checked)} />
+        장학·지원금도 볼래요 (소득분위·학점 입력)
+      </label>
 
       <section>
         <h2 className="section-title ok">지원 가능 ({eligible.length})</h2>

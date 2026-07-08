@@ -32,6 +32,16 @@
   background: #fff;
 }
 
+.scholar-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 2px 0;
+  font-size: 0.85rem;
+  color: #4b5563;
+  cursor: pointer;
+}
+
 .section-title {
   font-size: 1rem;
   margin: 26px 0 10px;
