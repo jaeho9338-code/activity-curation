@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ACTIVITIES, MAJORS, REGIONS, ENROLLMENTS } from "./data/activities";
 import { splitByMatch } from "./match";
+import { isPast, ddayLabel, daysLeft } from "./deadline";
 import "./App.css";
 
 const GPA_OPTIONS = [4.5, 4.0, 3.5, 3.0, 2.5];
@@ -18,7 +19,9 @@ export default function App() {
 
   const set = (key, value) => setProfile((p) => ({ ...p, [key]: value }));
 
-  const { eligible, ineligible, review } = splitByMatch(ACTIVITIES, profile);
+  // 마감 지난 공고는 목록에서 뺀다
+  const visible = ACTIVITIES.filter((a) => !isPast(a.deadline));
+  const { eligible, ineligible, review } = splitByMatch(visible, profile);
 
   return (
     <main>
@@ -81,7 +84,7 @@ export default function App() {
             <li key={a.id} className="card">
               <div className="card-top">
                 <span className="cat">{a.category}</span>
-                <span className="deadline">~{a.deadline}</span>
+                <span className={"deadline" + (daysLeft(a.deadline) <= 7 ? " imminent" : "")}>{ddayLabel(a.deadline)}</span>
               </div>
               <a className="title" href={a.url} target="_blank" rel="noopener">{a.title}</a>
               <p className="org">{a.org} · {a.source}</p>
@@ -98,7 +101,7 @@ export default function App() {
             <li key={a.id} className="card review-card">
               <div className="card-top">
                 <span className="cat">{a.category}</span>
-                <span className="deadline">~{a.deadline}</span>
+                <span className={"deadline" + (daysLeft(a.deadline) <= 7 ? " imminent" : "")}>{ddayLabel(a.deadline)}</span>
               </div>
               <a className="title" href={a.url} target="_blank" rel="noopener">{a.title}</a>
               <p className="note">확인 필요: {a.unknown.map((u) => `${u.label}(${u.req})`).join(", ")} — 잘 모름으로 판정 보류</p>

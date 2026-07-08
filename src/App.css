@@ -74,6 +74,10 @@
   font-size: 0.78rem;
   color: #9ca3af;
 }
+.deadline.imminent {
+  color: #ef4444;
+  font-weight: 700;
+}
 .title {
   font-weight: 600;
   color: #111827;
