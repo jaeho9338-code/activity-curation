@@ -19,6 +19,7 @@
 // @property {string[]} eligibility.enrollment   허용 재학상태, [] = 무관
 // @property {number|null} eligibility.incomeMax 소득분위 상한(이하), null = 무관
 // @property {number|null} eligibility.gpaMin    최소 학점(이상), null = 무관
+// @property {string} eligibilityText            원문 자격요건 문장 (판정 근거로 보여줌)
 
 export const MAJORS = ["공학", "자연", "인문", "사회", "예체능"];
 export const REGIONS = ["수도권", "부산", "대구", "광주", "대전"];
@@ -38,6 +39,7 @@ export const ACTIVITIES = [
     url: "https://example.com/a1",
     deadline: "2026-07-20",
     eligibility: { ...base, majors: ["공학"], enrollment: ["재학"] },
+    eligibilityText: "공학계열 재학생 대상. 학년·지역 무관.",
   },
   {
     id: "a2",
@@ -49,6 +51,7 @@ export const ACTIVITIES = [
     url: "https://example.com/a2",
     deadline: "2026-08-05",
     eligibility: { ...base },
+    eligibilityText: "만 19~34세 청년 누구나 지원 가능.",
   },
   {
     id: "a3",
@@ -58,8 +61,9 @@ export const ACTIVITIES = [
     track: "scholarship",
     source: "장학재단",
     url: "https://example.com/a3",
-    deadline: "2026-07-15",
+    deadline: "2026-07-05",
     eligibility: { ...base, enrollment: ["재학"], incomeMax: 4 },
+    eligibilityText: "소득 4분위 이하 재학생.",
   },
   {
     id: "a4",
@@ -71,6 +75,7 @@ export const ACTIVITIES = [
     url: "https://example.com/a4",
     deadline: "2026-07-31",
     eligibility: { ...base, regions: ["수도권"] },
+    eligibilityText: "수도권 거주자, 주 1회 이상 참여 가능자.",
   },
   {
     id: "a5",
@@ -82,6 +87,7 @@ export const ACTIVITIES = [
     url: "https://example.com/a5",
     deadline: "2026-07-25",
     eligibility: { ...base, grades: [3, 4], majors: ["공학", "자연"], enrollment: ["재학"] },
+    eligibilityText: "3~4학년 공학·자연계열 재학생.",
   },
   {
     id: "a6",
@@ -93,6 +99,7 @@ export const ACTIVITIES = [
     url: "https://example.com/a6",
     deadline: "2026-08-10",
     eligibility: { ...base, regions: ["부산"] },
+    eligibilityText: "부산 거주 청년.",
   },
   {
     id: "a7",
@@ -102,8 +109,9 @@ export const ACTIVITIES = [
     track: "scholarship",
     source: "장학재단",
     url: "https://example.com/a7",
-    deadline: "2026-07-18",
+    deadline: "2026-07-13",
     eligibility: { ...base, grades: [1, 2], majors: ["공학", "자연"], incomeMax: 8, gpaMin: 3.5 },
+    eligibilityText: "1~2학년 이공계, 소득 8분위 이하, 직전 학기 3.5 이상.",
   },
   {
     id: "a8",
@@ -115,5 +123,6 @@ export const ACTIVITIES = [
     url: "https://example.com/a8",
     deadline: "2026-08-01",
     eligibility: { ...base, enrollment: ["재학"], gpaMin: 4.0 },
+    eligibilityText: "재학생 중 직전 학기 평점 4.0 이상.",
   },
 ];
