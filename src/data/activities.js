@@ -47,7 +47,7 @@ export const ACTIVITIES = [
     org: "△△진흥원",
     category: "공모전",
     track: "activity",
-    source: "위비티",
+    source: "링커리어",
     url: "https://example.com/a2",
     deadline: "2026-08-05",
     eligibility: { ...base },

@@ -1,8 +1,8 @@
 # 대외활동 큐레이션
 
-기획·구현 설계서는 [docs/plan.md](docs/plan.md), 작업 분해는 [docs/checklist.md](docs/checklist.md)에. (초안 배경은 [docs/기획.md](docs/기획.md))
+기획·구현 설계서는 [docs/plan.md](docs/plan.md), 개발 백로그는 [docs/checklist.md](docs/checklist.md), 이번 주 계획은 [docs/주간계획.md](docs/주간계획.md)에. (초안 배경은 [docs/기획.md](docs/기획.md))
 
-대학생 대외활동, 공모전, 장학, 봉사 정보는 링커리어, 위비티, 1365, 장학재단, 지자체 등
+대학생 대외활동, 공모전, 장학, 봉사 정보는 링커리어, 콘테스트코리아, 1365, 장학재단, 지자체 등
 여러 곳에 흩어져 있다. 각 사이트는 모든 공고를 다 보여줄 뿐이라, 내가 실제로 지원할 수 있는 건
 직접 골라내야 한다. 이 프로젝트는 거기서 출발한다.
 
