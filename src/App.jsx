@@ -1,179 +1,142 @@
-import { useState } from "react";
-import { ACTIVITIES, MAJORS, REGIONS, ENROLLMENTS } from "./data/activities";
+import { useState, useEffect } from "react";
+import { ACTIVITIES } from "./data/activities";
 import { splitByMatch } from "./match";
-import { isPast, ddayLabel, daysLeft } from "./deadline";
+import { daysLeft, isPast } from "./deadline";
+import ConditionPanel from "./components/ConditionPanel";
+import ResultSection from "./components/ResultSection";
+import Card from "./components/Card";
+import DetailModal from "./components/DetailModal";
 import "./App.css";
 
-const GPA_OPTIONS = [4.5, 4.0, 3.5, 3.0, 2.5];
-
-// 불가 사유별로 그 자리에서 바로 고칠 수 있는 컨트롤 매핑
-const FIX = {
-  학년: { key: "grade", opts: [1, 2, 3, 4], fmt: (v) => v + "학년", parse: Number },
-  전공: { key: "major", opts: MAJORS, fmt: (v) => v, parse: String },
-  지역: { key: "region", opts: REGIONS, fmt: (v) => v, parse: String },
-  재학상태: { key: "enrollment", opts: ENROLLMENTS, fmt: (v) => v, parse: String },
-  소득분위: { key: "income", opts: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], fmt: (v) => v + "분위", parse: Number },
-  학점: { key: "gpa", opts: GPA_OPTIONS, fmt: (v) => v.toFixed(1), parse: Number },
-};
-
-function InlineFix({ label, profile, set }) {
-  const cfg = FIX[label];
-  if (!cfg) return null;
-  return (
-    <select className="fix" value={profile[cfg.key] ?? ""} onChange={(e) => set(cfg.key, cfg.parse(e.target.value))}>
-      {cfg.opts.map((o) => <option key={o} value={o}>{cfg.fmt(o)}</option>)}
-    </select>
-  );
-}
+const CATEGORIES = ["대외활동", "공모전", "장학", "봉사"];
+const DEFAULT_PROFILE = { grade: 3, major: "IT", region: "서울", age: 23, enrollment: "재학", income: null, gpa: null };
 
 export default function App() {
-  // 내 조건. income·gpa는 null이면 "잘 모름" → 매칭에서 확인 필요로 처리된다.
-  const [profile, setProfile] = useState({
-    grade: 3,
-    major: "공학",
-    region: "수도권",
-    enrollment: "재학",
-    income: null,
-    gpa: null,
-  });
+  // 입력 중인 조건(draft). 바꿔도 바로 매칭하지 않는다.
+  const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [showScholarship, setShowScholarship] = useState(false);
+  const [query, setQuery] = useState("");
 
-  const set = (key, value) => setProfile((p) => ({ ...p, [key]: value }));
+  // "찾기"를 눌렀을 때만 적용되는 조건. 결과는 이걸 기준으로 계산한다.
+  const [applied, setApplied] = useState({ profile: DEFAULT_PROFILE, showScholarship: false, query: "" });
 
-  // 장학 보기 토글: 끄면 소득·학점을 잘 모름으로 되돌린다
-  const toggleScholarship = (on) => {
-    setShowScholarship(on);
-    if (!on) setProfile((p) => ({ ...p, income: null, gpa: null }));
+  // 결과를 좁히는 가벼운 필터·정렬은 즉시 적용(재매칭 아님).
+  const [cats, setCats] = useState(() => new Set(CATEGORIES));
+  const [favOnly, setFavOnly] = useState(false);
+  const [sortBy, setSortBy] = useState("deadline");
+  const [showIneligible, setShowIneligible] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [favorites, setFavorites] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("favorites") || "[]")); } catch { return new Set(); }
+  });
+
+  // 즐겨찾기는 로컬스토리지에 저장(로그인 없이 유지).
+  useEffect(() => {
+    localStorage.setItem("favorites", JSON.stringify([...favorites]));
+  }, [favorites]);
+
+  const setField = (key, value) => setProfile((p) => ({ ...p, [key]: value }));
+  const runSearch = () => setApplied({ profile, showScholarship, query });
+  const toggleFav = (id) => setFavorites((prev) => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const toggleCat = (c) => setCats((prev) => {
+    const next = new Set(prev);
+    next.has(c) ? next.delete(c) : next.add(c);
+    return next;
+  });
+
+  // 적용된 조건으로 매칭. 장학 토글이 꺼져 있으면 소득·학점은 뺀다.
+  const ap = applied.profile;
+  const matchProfile = {
+    ...ap,
+    income: applied.showScholarship ? ap.income : null,
+    gpa: applied.showScholarship ? ap.gpa : null,
   };
 
-  // 마감 지난 공고는 목록에서 뺀다
-  const visible = ACTIVITIES.filter((a) => !isPast(a.deadline));
-  const { eligible, ineligible, review } = splitByMatch(visible, profile);
+  // 마감 지난 공고 제외 + 검색어(적용된) + 카테고리 + 즐겨찾기만.
+  const q = applied.query.trim();
+  const live = ACTIVITIES
+    .filter((a) => !isPast(a.deadline))
+    .filter((a) => q === "" || a.title.includes(q))
+    .filter((a) => cats.has(a.category))
+    .filter((a) => !favOnly || favorites.has(a.id));
+
+  const { eligible, review, near, ineligible } = splitByMatch(live, matchProfile);
+
+  // 정렬: 마감 임박순 또는 최신 등록순.
+  const bySort = sortBy === "recent"
+    ? (a, b) => (a.postedAt < b.postedAt ? 1 : a.postedAt > b.postedAt ? -1 : 0)
+    : (a, b) => daysLeft(a.deadline) - daysLeft(b.deadline);
+  [eligible, review, near, ineligible].forEach((arr) => arr.sort(bySort));
+
+  const total = eligible.length + review.length + near.length + ineligible.length;
+
+  // 상세 모달에 넘길 최신 즐겨찾기 상태(리스트에서 별표 토글해도 반영되게 id로 다시 찾음)
+  const selectedFav = selected ? favorites.has(selected.id) : false;
 
   return (
-    <main>
-      <header className="head">
-        <h1>대외활동 큐레이션</h1>
-        <p>내 조건을 입력하면, 지원 가능한 것만 골라줍니다. 모르는 항목은 잘 모름으로 두세요.</p>
+    <div className="app">
+      <header className="header">
+        <h1>내 조건에 맞는 대외활동</h1>
+        <p>공고를 모아주는 게 아니라, 내가 지원할 수 있는 것만 골라줍니다.</p>
       </header>
 
-      <section className="form">
-        <label>
-          학년
-          <select value={profile.grade} onChange={(e) => set("grade", Number(e.target.value))}>
-            {[1, 2, 3, 4].map((g) => <option key={g} value={g}>{g}학년</option>)}
-          </select>
-        </label>
-        <label>
-          전공
-          <select value={profile.major} onChange={(e) => set("major", e.target.value)}>
-            {MAJORS.map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
-        </label>
-        <label>
-          지역
-          <select value={profile.region} onChange={(e) => set("region", e.target.value)}>
-            {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </label>
-        <label>
-          재학상태
-          <select value={profile.enrollment} onChange={(e) => set("enrollment", e.target.value)}>
-            {ENROLLMENTS.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </label>
-        {showScholarship && (
-          <>
-            <label>
-              소득분위
-              <select
-                value={profile.income ?? ""}
-                onChange={(e) => set("income", e.target.value === "" ? null : Number(e.target.value))}
-              >
-                <option value="">잘 모름</option>
-                {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}분위</option>)}
-              </select>
-            </label>
-            <label>
-              학점
-              <select
-                value={profile.gpa ?? ""}
-                onChange={(e) => set("gpa", e.target.value === "" ? null : Number(e.target.value))}
-              >
-                <option value="">잘 모름</option>
-                {GPA_OPTIONS.map((v) => <option key={v} value={v}>{v.toFixed(1)}</option>)}
-              </select>
-            </label>
-          </>
-        )}
-      </section>
+      <ConditionPanel
+        profile={profile} setField={setField}
+        showScholarship={showScholarship} setShowScholarship={setShowScholarship}
+        query={query} setQuery={setQuery} runSearch={runSearch}
+      />
 
-      <label className="scholar-toggle">
-        <input type="checkbox" checked={showScholarship} onChange={(e) => toggleScholarship(e.target.checked)} />
-        장학·지원금도 볼래요 (소득분위·학점 입력)
-      </label>
-
-      <section>
-        <h2 className="section-title ok">지원 가능 ({eligible.length})</h2>
-        <ul className="list">
-          {eligible.map((a) => (
-            <li key={a.id} className="card">
-              <div className="card-top">
-                <span className="cat">{a.category}</span>
-                <span className={"deadline" + (daysLeft(a.deadline) <= 7 ? " imminent" : "")}>{ddayLabel(a.deadline)}</span>
-              </div>
-              <a className="title" href={a.url} target="_blank" rel="noopener">{a.title}</a>
-              <p className="org">{a.org} · {a.source}</p>
-              <p className="evidence">근거: {a.eligibilityText}</p>
-            </li>
+      <section className="results">
+        <div className="filters">
+          {CATEGORIES.map((c) => (
+            <button key={c} className={"chip" + (cats.has(c) ? " on" : "")} onClick={() => toggleCat(c)}>{c}</button>
           ))}
-          {eligible.length === 0 && <li className="empty">조건에 맞는 활동이 없습니다.</li>}
-        </ul>
-      </section>
+          <button className={"chip fav-chip" + (favOnly ? " on" : "")} onClick={() => setFavOnly((f) => !f)}>★ 즐겨찾기만</button>
+        </div>
 
-      <section>
-        <h2 className="section-title review">확인 필요 ({review.length})</h2>
-        <ul className="list">
-          {review.map((a) => (
-            <li key={a.id} className="card review-card">
-              <div className="card-top">
-                <span className="cat">{a.category}</span>
-                <span className={"deadline" + (daysLeft(a.deadline) <= 7 ? " imminent" : "")}>{ddayLabel(a.deadline)}</span>
-              </div>
-              <a className="title" href={a.url} target="_blank" rel="noopener">{a.title}</a>
-              <p className="note">확인 필요: {a.unknown.map((u) => `${u.label}(${u.req})`).join(", ")} — 잘 모름으로 판정 보류</p>
-              <p className="evidence">근거: {a.eligibilityText}</p>
-            </li>
-          ))}
-          {review.length === 0 && <li className="empty">확인이 필요한 활동이 없습니다.</li>}
-        </ul>
-      </section>
+        <div className="result-head">
+          <div className="summary">
+            <span className="s-eligible">가능 {eligible.length}</span>
+            <span className="s-review">확인 필요 {review.length}</span>
+            <span className="s-near">거의 가능 {near.length}</span>
+          </div>
+          <select className="sort-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="deadline">마감 임박순</option>
+            <option value="recent">최신 등록순</option>
+          </select>
+        </div>
 
-      <section>
-        <h2 className="section-title no">지원 불가 ({ineligible.length})</h2>
-        <ul className="list">
-          {ineligible.map((a) => (
-            <li key={a.id} className="card muted">
-              <div className="card-top">
-                <span className="title-muted">{a.title}</span>
-                {a.failed.length === 1 && <span className="near">이것만 바꾸면 가능</span>}
-              </div>
-              <ul className="reasons">
-                {a.failed.map((f) => (
-                  <li key={f.label}>
-                    <span className="rlabel">{f.label}</span>
-                    <span className="req">요구 {f.req}</span>
-                    <span className="mine">내 조건 {f.mine}</span>
-                    {a.failed.length === 1 && <InlineFix label={f.label} profile={profile} set={set} />}
-                  </li>
+        <ResultSection title="지원 가능" items={eligible} cls="eligible" favorites={favorites} onToggleFav={toggleFav} onOpen={setSelected} />
+        <ResultSection title="확인 필요" items={review} cls="review" favorites={favorites} onToggleFav={toggleFav} onOpen={setSelected} />
+        <ResultSection title="거의 가능 (조건 하나만 맞추면)" items={near} cls="near" favorites={favorites} onToggleFav={toggleFav} onOpen={setSelected} />
+
+        {ineligible.length > 0 && (
+          <div className="section ineligible">
+            <button className="fold" onClick={() => setShowIneligible((s) => !s)}>
+              지원 불가 {ineligible.length}건 {showIneligible ? "접기" : "펼치기"}
+            </button>
+            {showIneligible && (
+              <div className="cards">
+                {ineligible.map((it) => (
+                  <Card key={it.id} item={it} fav={favorites.has(it.id)} onToggleFav={() => toggleFav(it.id)} onOpen={() => setSelected(it)} />
                 ))}
-              </ul>
-              <p className="evidence">근거: {a.eligibilityText}</p>
-            </li>
-          ))}
-          {ineligible.length === 0 && <li className="empty">막힌 활동이 없습니다.</li>}
-        </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {total === 0 && <p className="empty">조건에 맞는 공고가 없어요. 필터나 검색어를 바꿔보세요.</p>}
       </section>
-    </main>
+
+      <DetailModal
+        item={selected} fav={selectedFav}
+        onToggleFav={() => selected && toggleFav(selected.id)}
+        onClose={() => setSelected(null)}
+      />
+    </div>
   );
 }
