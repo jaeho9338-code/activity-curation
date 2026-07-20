@@ -29,9 +29,11 @@ function isExpired(deadline) {
   return !!deadline && deadline < today;
 }
 
-// 소스 간 중복 판별용 제목 정규화: 대괄호·괄호·기호·공백 제거하고 소문자로. 같은 공고면 같은 서명이 나온다.
+// 소스 간 중복 판별용 제목 정규화: 괄호 기호만 벗기고 안 내용은 남긴다(기호·공백 제거, 소문자화).
+// 대괄호 안 내용을 통째로 지우면 "[부산] OO 공모전"과 "[서울] OO 공모전"처럼 지역만 다른 서로 다른
+// 공고가 같은 서명으로 뭉쳐 하나가 놓칠 수 있다(총망라 원칙과 충돌). 괄호만 벗겨 내용은 지킨다.
 function sig(title) {
-  return (title || "").replace(/\[[^\]]*\]|\([^)]*\)/g, "").replace(/[^0-9a-z가-힣]/gi, "").toLowerCase();
+  return (title || "").replace(/[[\]()]/g, "").replace(/[^0-9a-z가-힣]/gi, "").toLowerCase();
 }
 
 // 주최기관명에 지자체 신호가 있으면 true. 완벽한 판별은 불가능하다(예: 기초자치단체명 전부는 못 커버).
