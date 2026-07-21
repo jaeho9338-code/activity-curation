@@ -17,13 +17,13 @@
       "forUniv": true
     },
     "gold": {
-      "grades": "?",
-      "majors": "?",
+      "grades": [],
+      "majors": [],
       "regions": "?",
-      "enrollment": "?",
-      "ageMin": "?",
-      "ageMax": "?",
-      "forUniv": "?"
+      "enrollment": [],
+      "ageMin": null,
+      "ageMax": null,
+      "forUniv": true
     }
   },
   {
@@ -44,13 +44,13 @@
       "forUniv": true
     },
     "gold": {
-      "grades": "?",
-      "majors": "?",
-      "regions": "?",
-      "enrollment": "?",
-      "ageMin": "?",
-      "ageMax": "?",
-      "forUniv": "?"
+      "grades": [],
+      "majors": [],
+      "regions": [],
+      "enrollment": [],
+      "ageMin": null,
+      "ageMax": null,
+      "forUniv": true
     }
   },
   {
@@ -71,13 +71,13 @@
       "forUniv": true
     },
     "gold": {
-      "grades": "?",
-      "majors": "?",
-      "regions": "?",
-      "enrollment": "?",
-      "ageMin": "?",
-      "ageMax": "?",
-      "forUniv": "?"
+      "grades": [],
+      "majors": [],
+      "regions": [],
+      "enrollment": [],
+      "ageMin": 19,
+      "ageMax": 39,
+      "forUniv": true
     }
   },
   {
@@ -98,13 +98,13 @@
       "forUniv": true
     },
     "gold": {
-      "grades": "?",
-      "majors": "?",
-      "regions": "?",
-      "enrollment": "?",
-      "ageMin": "?",
-      "ageMax": "?",
-      "forUniv": "?"
+      "grades": [],
+      "majors": [],
+      "regions": [],
+      "enrollment": [],
+      "ageMin": null,
+      "ageMax": null,
+      "forUniv": true
     }
   },
   {
@@ -457,13 +457,13 @@
       "forUniv": true
     },
     "gold": {
-      "grades": "?",
-      "majors": "?",
-      "regions": "?",
-      "enrollment": "?",
-      "ageMin": "?",
-      "ageMax": "?",
-      "forUniv": "?"
+      "grades": [],
+      "majors": [],
+      "regions": [],
+      "enrollment": [],
+      "ageMin": 15,
+      "ageMax": 34,
+      "forUniv": true
     }
   },
   {
@@ -484,13 +484,13 @@
       "forUniv": true
     },
     "gold": {
-      "grades": "?",
-      "majors": "?",
-      "regions": "?",
-      "enrollment": "?",
-      "ageMin": "?",
-      "ageMax": "?",
-      "forUniv": "?"
+      "grades": [],
+      "majors": [],
+      "regions": [],
+      "enrollment": [],
+      "ageMin": 18,
+      "ageMax": 39,
+      "forUniv": false
     }
   },
   {
@@ -511,12 +511,12 @@
       "forUniv": true
     },
     "gold": {
-      "grades": "?",
-      "majors": "?",
-      "regions": "?",
-      "enrollment": "?",
-      "ageMin": "?",
-      "ageMax": "?",
+      "grades": [],
+      "majors": [],
+      "regions": [],
+      "enrollment": [],
+      "ageMin": null,
+      "ageMax": null,
       "forUniv": "?"
     }
   },
@@ -538,13 +538,13 @@
       "forUniv": true
     },
     "gold": {
-      "grades": "?",
-      "majors": "?",
-      "regions": "?",
-      "enrollment": "?",
-      "ageMin": "?",
-      "ageMax": "?",
-      "forUniv": "?"
+      "grades": [],
+      "majors": [],
+      "regions": [],
+      "enrollment": [],
+      "ageMin": 15,
+      "ageMax": 34,
+      "forUniv": false
     }
   }
 ]
