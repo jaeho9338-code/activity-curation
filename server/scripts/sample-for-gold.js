@@ -23,9 +23,10 @@ function currentExtracted(eligibility) {
   };
 }
 
-// 사람이 채울 빈 정답칸. 값 종류는 currentExtracted와 같은 모양으로 맞춘다(채점 스크립트가 비교하기 쉽게).
+// 사람이 채울 빈 정답칸. "?"는 "아직 안 채움" 표시다 - null은 나이 등에서 "진짜 무관"이라는 유효한
+// 답이라 겹치면 안 되고, 그래서 값이 없다는 표시로 null 대신 "?"를 쓴다(채점 스크립트가 "?"만 건너뜀).
 function emptyGold() {
-  return { grades: null, majors: null, regions: null, enrollment: null, ageMin: null, ageMax: null, forUniv: null };
+  return { grades: "?", majors: "?", regions: "?", enrollment: "?", ageMin: "?", ageMax: "?", forUniv: "?" };
 }
 
 async function run() {

@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "batch": "node batch/collect.js"
+    "batch": "node batch/collect.js",
+    "test": "node --test"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
