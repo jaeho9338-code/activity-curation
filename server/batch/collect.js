@@ -172,7 +172,9 @@ async function collectYouthcenter() {
     for (const it of items) {
       consecutiveExpired = isExpired(it.deadline) ? consecutiveExpired + 1 : 0;
       if (consecutiveExpired >= CONSECUTIVE_EXPIRED_STOP) { stop = true; break; }
-      rows.push({ title: it.title, org: it.org, category: youthcenterCategory(it.mclsfNm), track: "activity", source: "온통청년", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: "curated", eligibility: { ...base, regions: it.regions, ageMin: it.ageMin, ageMax: it.ageMax, forUniv: true, text: it.text.slice(0, 300) } });
+      // enrollment: 참여제외대상에 "재학생"이 있으면 졸업예정만(실측 확인). forUniv는 그대로 true로
+      // 두고(온통청년 자체가 청년정책 포털이라 대학생도 기본 대상), enrollment로 더 좁힌다.
+      rows.push({ title: it.title, org: it.org, category: youthcenterCategory(it.mclsfNm), track: "activity", source: "온통청년", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: "curated", eligibility: { ...base, regions: it.regions, enrollment: it.enrollment, ageMin: it.ageMin, ageMax: it.ageMax, forUniv: true, text: it.text.slice(0, 300) } });
     }
     if (stop) { console.log(`온통청년: 연속 마감 ${CONSECUTIVE_EXPIRED_STOP}건, 페이지 ${p}에서 중단`); break; }
     if (p * 100 >= totalCount) break;
