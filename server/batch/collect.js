@@ -9,6 +9,7 @@ import * as wevity from "../sources/wevity.js";
 import * as busan from "../sources/busan_youth.js";
 import * as linkareer from "../sources/linkareer.js";
 import * as youthcenter from "../sources/youthcenter.js";
+import { deriveRegionFromDistrict } from "../regionLookup.js";
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const today = new Date().toISOString().slice(0, 10);
@@ -55,7 +56,11 @@ function contestEligibility(target, body) {
   const t = (target || "").replace(/\s+/g, "");
   const forUniv = /누구나|일반인|대학생|대학원생|청년/.test(t);
   const nums = ((target || "") + " " + (body || "")).match(/(\d{1,2})\s*세/g)?.map((s) => parseInt(s)) || [];
-  return { ...base, ageMin: nums.length >= 2 ? Math.min(...nums) : null, ageMax: nums.length >= 2 ? Math.max(...nums) : null, forUniv, text: (target || "").replace(/\s+/g, " ").trim() };
+  // "영등포구민만" 처럼 한 도시에만 있는 구·군 이름이 원문에 있으면 그 시·도로 지역을 채운다(겹치는
+  // 구 이름은 regionLookup.js가 알아서 빈 배열로 둔다 - 못 맞추면 무관이 아니라 확인 필요로 가야 하니
+  // isLocalGovOrg 등 다른 안전장치가 여전히 커버한다).
+  const regions = deriveRegionFromDistrict((target || "") + " " + (body || ""));
+  return { ...base, regions, ageMin: nums.length >= 2 ? Math.min(...nums) : null, ageMax: nums.length >= 2 ? Math.max(...nums) : null, forUniv, text: (target || "").replace(/\s+/g, " ").trim() };
 }
 
 async function collectContestkorea() {
