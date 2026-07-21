@@ -59,6 +59,7 @@ export async function fetchList(pageNum = 1, pageSize = 100) {
       ageMax: maxAge > 0 ? maxAge : null,
       regions: deriveRegions(p.zipCd),
       text: (p.plcySprtCn || p.plcyExplnCn || "").replace(/\s+/g, " ").trim(),
+      mclsfNm: p.mclsfNm || "", // 중분류(실측: "교육비지원" 등). 장학 성격 판별에 씀 - collect.js
       sourceUrl: `${DETAIL_BASE}/${p.plcyNo}`,
     };
   });
