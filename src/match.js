@@ -13,7 +13,8 @@
 
 export function matchActivity(activity, profile) {
   // 원문을 못 읽은 공고는 판정하지 않고 확인 필요로 보낸다.
-  if (activity.parseStatus === "needs_review") {
+  // eligibility가 없는 공고(수집기 이상 등)도 판정할 근거가 없으니 같이 확인 필요로 보낸다(터지지 않게).
+  if (activity.parseStatus === "needs_review" || !activity.eligibility) {
     return { status: "review", failed: [] };
   }
 
