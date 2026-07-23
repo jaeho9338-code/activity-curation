@@ -30,6 +30,13 @@ test("거의 가능(near)이면 '이것만 맞으면 가능' 문구를 보여준
   expect(screen.getByText(/이것만 맞으면 가능: 지역 부산/)).toBeInTheDocument();
 });
 
+test("확인 필요인데 근거 원문이 없으면 대시 없이 '확인 필요'만 (빈 대시 방지)", () => {
+  const review = item({ status: "review", eligibilityText: "" });
+  render(<Card item={review} fav={false} onToggleFav={() => {}} onOpen={() => {}} />);
+  expect(screen.getByText("확인 필요")).toBeInTheDocument();
+  expect(screen.queryByText("확인 필요 —")).toBeNull();
+});
+
 test("즐겨찾기면 채운 별(★), 아니면 빈 별(☆)", () => {
   const { rerender } = render(<Card item={item()} fav={true} onToggleFav={() => {}} onOpen={() => {}} />);
   expect(screen.getByLabelText("즐겨찾기").textContent).toBe("★");
