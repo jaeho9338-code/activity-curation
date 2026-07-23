@@ -24,9 +24,6 @@ export default function Hero({ count, updatedAt }) {
           {fresh && <span className="hero-fresh">{fresh}</span>}
         </div>
       </div>
-      <div className="hero-mascot" aria-hidden="true">
-        <span className="hero-face" />
-      </div>
     </section>
   );
 }
