@@ -33,6 +33,107 @@
   color: var(--muted);
 }
 
+/* 히어로: 다크 퍼플 카드, 말 거는 제목, 오른쪽 둥근 캐릭터 */
+.hero {
+  margin: 20px 0 0;
+  padding: 26px 28px;
+  background: linear-gradient(135deg, var(--dark) 0%, #3a2b63 100%);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.hero-text {
+  flex: 1;
+  min-width: 0;
+}
+.hero-title {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-wrap: balance;
+}
+.hero-sub {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #c9bfe8;
+}
+.hero-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.hero-badge {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--violet);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.hero-fresh {
+  font-size: 0.85rem;
+  color: #a99fce;
+}
+/* 둥근 캐릭터: 부드러운 원에 웃는 얼굴 */
+.hero-mascot {
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #a78bff 0%, var(--violet) 70%);
+  box-shadow: inset 0 -8px 16px rgba(0, 0, 0, 0.15), 0 6px 16px rgba(123, 92, 255, 0.4);
+  position: relative;
+}
+.hero-face,
+.hero-face::before,
+.hero-face::after {
+  position: absolute;
+  background: #fff;
+}
+/* 두 눈 */
+.hero-face::before,
+.hero-face::after {
+  content: "";
+  width: 9px;
+  height: 12px;
+  border-radius: 50%;
+  top: 34px;
+}
+.hero-face::before { left: 30px; }
+.hero-face::after { right: 30px; }
+/* 웃는 입 */
+.hero-face {
+  inset: 0;
+  background: none;
+}
+.hero-mascot::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 52px;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 13px;
+  border-bottom: 3px solid #fff;
+  border-radius: 0 0 26px 26px;
+}
+@media (max-width: 520px) {
+  .hero { padding: 22px; gap: 14px; }
+  .hero-title { font-size: 1.25rem; }
+  .hero-mascot { width: 72px; height: 72px; }
+  .hero-face::before, .hero-face::after { top: 26px; width: 7px; height: 10px; }
+  .hero-face::before { left: 22px; }
+  .hero-face::after { right: 22px; }
+  .hero-mascot::after { top: 40px; width: 20px; height: 10px; }
+}
+
 /* 조건 입력 패널 */
 .panel {
   margin: 24px 0;
