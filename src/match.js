@@ -36,14 +36,8 @@ export function matchActivity(activity, profile) {
   if (profile.enrollment != null && e.enrollment?.length && !e.enrollment.includes(profile.enrollment)) {
     failed.push({ label: "재학상태", req: e.enrollment.join("·"), mine: profile.enrollment, near: false });
   }
-  if (profile.age != null && (e.ageMin != null || e.ageMax != null)) {
-    const below = e.ageMin != null && profile.age < e.ageMin;
-    const above = e.ageMax != null && profile.age > e.ageMax;
-    if (below || above) {
-      const req = `만 ${e.ageMin ?? ""}~${e.ageMax ?? ""}세`;
-      failed.push({ label: "나이", req, mine: profile.age + "세", near: false });
-    }
-  }
+  // 나이는 매칭에서 안 본다. 사용자층이 대학생(어린 편)이라 "만 15~34세 청년" 같은 조건은 늘 만족이라
+  // 사람을 거를 일이 없어 노이즈였다(제품 결정). eligibility에 ageMin/ageMax가 남아있어도 읽지 않는다.
   if (profile.income != null && e.incomeMax != null && profile.income > e.incomeMax) {
     failed.push({ label: "소득분위", req: e.incomeMax + "분위 이하", mine: profile.income + "분위", near: false });
   }

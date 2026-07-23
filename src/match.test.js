@@ -5,7 +5,7 @@ import { test, expect } from "vitest";
 import { matchActivity } from "./match.js";
 
 // eligibility 기본틀(전부 무관). 각 테스트에서 필요한 필드만 덮어쓴다.
-const base = { grades: [], majors: [], regions: [], enrollment: [], ageMin: null, ageMax: null, incomeMax: null, gpaMin: null };
+const base = { grades: [], majors: [], regions: [], enrollment: [], incomeMax: null, gpaMin: null };
 const activity = (elig, parseStatus = "curated") => ({ parseStatus, eligibility: { ...base, ...elig } });
 
 test("어긋난 조건 없으면 eligible", () => {
@@ -51,22 +51,6 @@ test("두 조건 이상 어긋나면 지원 불가", () => {
   expect(r.failed.length).toBe(2);
 });
 
-test("나이: 최소 미만이면 어긋남", () => {
-  const r = matchActivity(activity({ ageMin: 20 }), { age: 19 });
-  expect(r.status).toBe("near");
-  expect(r.failed[0].label).toBe("나이");
-});
-
-test("나이: 경계값(정확히 최소)은 통과", () => {
-  const r = matchActivity(activity({ ageMin: 20, ageMax: 30 }), { age: 20 });
-  expect(r.status).toBe("eligible");
-});
-
-test("나이: 경계값(정확히 최대)은 통과", () => {
-  const r = matchActivity(activity({ ageMin: 20, ageMax: 30 }), { age: 30 });
-  expect(r.status).toBe("eligible");
-});
-
 test("소득분위: 경계값(정확히 상한)은 통과(이하)", () => {
   const r = matchActivity(activity({ incomeMax: 8 }), { income: 8 });
   expect(r.status).toBe("eligible");
@@ -75,11 +59,6 @@ test("소득분위: 경계값(정확히 상한)은 통과(이하)", () => {
 test("학점: 경계값(정확히 하한)은 통과(이상)", () => {
   const r = matchActivity(activity({ gpaMin: 3.5 }), { gpa: 3.5 });
   expect(r.status).toBe("eligible");
-});
-
-test("나이: 최대 초과면 어긋남", () => {
-  const r = matchActivity(activity({ ageMin: 20, ageMax: 30 }), { age: 31 });
-  expect(r.status).toBe("near");
 });
 
 test("소득분위: 상한 초과면 어긋남", () => {
