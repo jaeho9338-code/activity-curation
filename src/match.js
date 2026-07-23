@@ -21,17 +21,19 @@ export function matchActivity(activity, profile) {
   const e = activity.eligibility;
   const failed = [];
 
-  if (profile.grade != null && e.grades.length && !e.grades.includes(profile.grade)) {
+  // 배열 필드는 ?.length로 접근한다. 값이 null(수집기가 필드 하나만 빠뜨린 경우)이면 무관으로 보고
+  // 건너뛴다 - 못 읽은 걸 잘못 걸러내는 것보다 통과시키는 쪽이 안전하다(안 놓치기 원칙).
+  if (profile.grade != null && e.grades?.length && !e.grades.includes(profile.grade)) {
     const near = e.grades.some((g) => Math.abs(g - profile.grade) === 1);
     failed.push({ label: "학년", req: e.grades.map((g) => g + "학년").join("·"), mine: profile.grade + "학년", near });
   }
-  if (profile.major != null && e.majors.length && !e.majors.includes(profile.major)) {
+  if (profile.major != null && e.majors?.length && !e.majors.includes(profile.major)) {
     failed.push({ label: "전공", req: e.majors.join("·"), mine: profile.major, near: false });
   }
-  if (profile.region != null && e.regions.length && !e.regions.includes(profile.region)) {
+  if (profile.region != null && e.regions?.length && !e.regions.includes(profile.region)) {
     failed.push({ label: "지역", req: e.regions.join("·"), mine: profile.region, near: false });
   }
-  if (profile.enrollment != null && e.enrollment.length && !e.enrollment.includes(profile.enrollment)) {
+  if (profile.enrollment != null && e.enrollment?.length && !e.enrollment.includes(profile.enrollment)) {
     failed.push({ label: "재학상태", req: e.enrollment.join("·"), mine: profile.enrollment, near: false });
   }
   if (profile.age != null && (e.ageMin != null || e.ageMax != null)) {

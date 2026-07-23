@@ -63,6 +63,21 @@ test("나이: 경계값(정확히 최소)은 통과", () => {
   assert.equal(r.status, "eligible");
 });
 
+test("나이: 경계값(정확히 최대)은 통과", () => {
+  const r = matchActivity(activity({ ageMin: 20, ageMax: 30 }), { age: 30 });
+  assert.equal(r.status, "eligible");
+});
+
+test("소득분위: 경계값(정확히 상한)은 통과(이하)", () => {
+  const r = matchActivity(activity({ incomeMax: 8 }), { income: 8 });
+  assert.equal(r.status, "eligible");
+});
+
+test("학점: 경계값(정확히 하한)은 통과(이상)", () => {
+  const r = matchActivity(activity({ gpaMin: 3.5 }), { gpa: 3.5 });
+  assert.equal(r.status, "eligible");
+});
+
 test("나이: 최대 초과면 어긋남", () => {
   const r = matchActivity(activity({ ageMin: 20, ageMax: 30 }), { age: 31 });
   assert.equal(r.status, "near");
@@ -78,9 +93,18 @@ test("학점: 하한 미만이면 어긋남", () => {
   assert.equal(r.status, "near");
 });
 
-// 경계 케이스: eligibility가 null인데 parseStatus는 curated인 공고(수집기 버그로 이런 게 들어올 수 있음).
-// 지금 코드는 e.grades.length에서 터질 것이다 - 이게 red로 나오면 방어를 추가한다.
-test("eligibility가 null이어도 터지지 않는다", () => {
+// 경계 케이스: eligibility가 통째로 null인 공고(수집기 이상). 터지지 않고 확인 필요로 가야 한다.
+test("eligibility가 null이면 터지지 않고 review", () => {
   const bad = { parseStatus: "curated", eligibility: null };
-  assert.doesNotThrow(() => matchActivity(bad, { grade: 3 }));
+  let r;
+  assert.doesNotThrow(() => { r = matchActivity(bad, { grade: 3 }); });
+  assert.equal(r.status, "review");
+  assert.deepEqual(r.failed, []);
+});
+
+// 경계 케이스: eligibility는 객체인데 배열 필드 하나가 null(수집기가 필드 하나만 빠뜨린 경우).
+// 통째로 null만 막으면 여기서 여전히 터진다 - 이게 red로 나오면 필드 단위 방어를 추가한다.
+test("eligibility 배열 필드 하나가 null이어도 터지지 않는다", () => {
+  const partial = { parseStatus: "curated", eligibility: { ...base, grades: null } };
+  assert.doesNotThrow(() => matchActivity(partial, { grade: 3 }));
 });
