@@ -8,6 +8,7 @@
 //   node scripts/purge-expired.js --apply    (실제 삭제)
 import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
+import { fileURLToPath } from "node:url";
 
 const todayStr = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD (deadline도 같은 형식이라 문자열 비교 가능)
 
@@ -36,8 +37,8 @@ export async function purgeExpired(supabase, apply = false) {
   return { count, bySrc, applied: apply };
 }
 
-// 단독 실행(CLI)일 때만 도는 부분.
-if (import.meta.url === `file://${process.argv[1]}`) {
+// 단독 실행(CLI)일 때만 도는 부분. 경로에 공백이 있어 fileURLToPath로 비교한다(file://+argv 직접 비교는 %20 때문에 실패).
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
   const apply = process.argv.includes("--apply");
   const r = await purgeExpired(supabase, apply);
