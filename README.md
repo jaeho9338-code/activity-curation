@@ -108,7 +108,7 @@ flowchart LR
 - 프론트: React (Vite) + react-router-dom. Supabase를 supabase-js로 직접 조회, 매칭은 화면 쪽 match.js.
 - 데이터: Supabase (Postgres, 자격요건은 JSONB).
 - 수집: Node 스크립트 (cheerio 크롤링 + 공공·내부 API).
-- 파싱: Gemini 2.5 Flash-Lite(무료 등급)로 크롤링한 자유 문장 자격요건을 구조화. API가 구조로 주는 값은 규칙으로 매핑해 호출을 아낀다.
+- 파싱: Gemini 3.5 Flash-Lite(무료 등급)로 크롤링한 자유 문장 자격요건을 구조화. API가 구조로 주는 값은 규칙으로 매핑해 호출을 아낀다.
 
 ## 로드맵
 
