@@ -7,6 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as contestkorea from "../sources/contestkorea.js";
 import * as wevity from "../sources/wevity.js";
 import * as busan from "../sources/busan_youth.js";
+import * as seoul from "../sources/seoul_youth.js";
 import * as linkareer from "../sources/linkareer.js";
 import * as youthcenter from "../sources/youthcenter.js";
 import * as scholarship from "../sources/scholarship.js";
@@ -129,6 +130,23 @@ async function collectBusan() {
   return rows;
 }
 
+// 서울 청년몽땅정보통: 부산청년플랫폼의 서울판. 게시글에 마감일이 구조 필드로 없어 needs_review로,
+// 지역은 서울로 둔다. 게시판이 작아(수십 건) 빈 페이지에서 자연히 멈춘다.
+async function collectSeoul() {
+  const rows = [];
+  for (let p = 1; p <= 10; p++) {
+    let list;
+    try { list = await seoul.fetchList(p); }
+    catch (e) { console.log(`서울: 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
+    if (!list.length) break;
+    for (const it of list) {
+      rows.push({ title: it.title, org: "서울시", category: "지자체", track: "activity", source: "서울청년몽땅정보통", url: it.sourceUrl, deadline: null, posted_at: today, parse_status: "needs_review", eligibility: { ...base, regions: ["서울"], forUniv: true, text: "" } });
+    }
+    await sleep(300);
+  }
+  return rows;
+}
+
 async function collectLinkareer() {
   const rows = [];
   for (const t of linkareer.TYPES) {
@@ -219,8 +237,8 @@ async function fetchAllTitles() {
 
 async function run() {
   // 소스 하나가 실패해도(일시적 5xx 등) 나머지 소스가 이미 모은 건 버리지 않는다(allSettled).
-  const settled = await Promise.allSettled([collectContestkorea(), collectWevity(), collectBusan(), collectLinkareer(), collectYouthcenter(), collectScholarship()]);
-  const names = ["콘코", "위비티", "부산", "링커리어", "온통청년", "장학재단"];
+  const settled = await Promise.allSettled([collectContestkorea(), collectWevity(), collectBusan(), collectSeoul(), collectLinkareer(), collectYouthcenter(), collectScholarship()]);
+  const names = ["콘코", "위비티", "부산", "서울", "링커리어", "온통청년", "장학재단"];
   const groups = settled.map((s, i) => {
     if (s.status === "rejected") { console.log(`${names[i]}: 전체 실패(${s.reason?.message}), 0건으로 처리`); return []; }
     return s.value;
@@ -241,7 +259,7 @@ async function run() {
 
   const { data, error } = await supabase.from("postings").upsert(rows, { onConflict: "url", ignoreDuplicates: true }).select("id");
   if (error) throw error;
-  console.log(`수집: 콘코 ${groups[0].length} + 위비티 ${groups[1].length} + 부산 ${groups[2].length} + 링커리어 ${groups[3].length} + 온통청년 ${groups[4].length} + 장학재단 ${groups[5].length} = ${all.length}건`);
+  console.log(`수집: 콘코 ${groups[0].length} + 위비티 ${groups[1].length} + 부산 ${groups[2].length} + 서울 ${groups[3].length} + 링커리어 ${groups[4].length} + 온통청년 ${groups[5].length} + 장학재단 ${groups[6].length} = ${all.length}건`);
   console.log(`제목 중복 ${dup}건 걸러냄. DB 신규 저장 ${data.length}건.`);
 }
 
