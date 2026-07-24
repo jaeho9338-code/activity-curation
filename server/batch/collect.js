@@ -9,6 +9,7 @@ import * as wevity from "../sources/wevity.js";
 import * as busan from "../sources/busan_youth.js";
 import * as linkareer from "../sources/linkareer.js";
 import * as youthcenter from "../sources/youthcenter.js";
+import * as scholarship from "../sources/scholarship.js";
 import { deriveRegionFromDistrict } from "../regionLookup.js";
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -182,6 +183,24 @@ async function collectYouthcenter() {
   return rows;
 }
 
+// 한국장학재단: 월 1회 갱신 스냅샷(1,850건). 성적·소득 기준이 자유문장이라 규칙으로 못 뽑아
+// 장학은 needs_review(확인 필요)로 두고, 성적·소득 조건을 카드 근거(text)로 보여준다.
+async function collectScholarship() {
+  const rows = [];
+  for (let p = 1; p <= 20; p++) {
+    let items, totalCount;
+    try { ({ items, totalCount } = await scholarship.fetchList(p, 100)); }
+    catch (e) { console.log(`장학재단: 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
+    if (!items.length) break;
+    for (const it of items) {
+      rows.push({ title: it.title, org: it.org, category: "장학", track: "scholarship", source: "한국장학재단", url: it.url, deadline: it.deadline, posted_at: today, parse_status: "needs_review", eligibility: { ...base, forUniv: true, text: it.text.slice(0, 300) } });
+    }
+    if (p * 100 >= totalCount) break;
+    await sleep(300);
+  }
+  return rows;
+}
+
 // DB의 모든 제목을 페이지 없이 다 가져온다. Supabase select는 기본 1000행 제한이 있어(실측으로 드러난 버그),
 // range로 넘기지 않으면 DB가 커질수록 중복체크가 앞쪽 1000건만 보고 나머지는 못 걸러낸다.
 async function fetchAllTitles() {
@@ -200,8 +219,8 @@ async function fetchAllTitles() {
 
 async function run() {
   // 소스 하나가 실패해도(일시적 5xx 등) 나머지 소스가 이미 모은 건 버리지 않는다(allSettled).
-  const settled = await Promise.allSettled([collectContestkorea(), collectWevity(), collectBusan(), collectLinkareer(), collectYouthcenter()]);
-  const names = ["콘코", "위비티", "부산", "링커리어", "온통청년"];
+  const settled = await Promise.allSettled([collectContestkorea(), collectWevity(), collectBusan(), collectLinkareer(), collectYouthcenter(), collectScholarship()]);
+  const names = ["콘코", "위비티", "부산", "링커리어", "온통청년", "장학재단"];
   const groups = settled.map((s, i) => {
     if (s.status === "rejected") { console.log(`${names[i]}: 전체 실패(${s.reason?.message}), 0건으로 처리`); return []; }
     return s.value;
@@ -222,7 +241,7 @@ async function run() {
 
   const { data, error } = await supabase.from("postings").upsert(rows, { onConflict: "url", ignoreDuplicates: true }).select("id");
   if (error) throw error;
-  console.log(`수집: 콘코 ${groups[0].length} + 위비티 ${groups[1].length} + 부산 ${groups[2].length} + 링커리어 ${groups[3].length} + 온통청년 ${groups[4].length} = ${all.length}건`);
+  console.log(`수집: 콘코 ${groups[0].length} + 위비티 ${groups[1].length} + 부산 ${groups[2].length} + 링커리어 ${groups[3].length} + 온통청년 ${groups[4].length} + 장학재단 ${groups[5].length} = ${all.length}건`);
   console.log(`제목 중복 ${dup}건 걸러냄. DB 신규 저장 ${data.length}건.`);
 }
 
