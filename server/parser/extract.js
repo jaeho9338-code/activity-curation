@@ -93,7 +93,7 @@ async function classifyAndExtract(rawTitle, rawText) {
         type: "object",
         properties: {
           track: { type: "string", enum: ["activity", "scholarship"] },
-          category: { type: "string", enum: ["대외활동", "공모전", "봉사", "장학"] },
+          category: { type: "string", enum: ["대외활동", "공모전", "장학"] },
           grades: { type: "array", items: { type: "integer", enum: [1, 2, 3, 4] } },
           enrollment_status: { type: "array", items: { type: "string", enum: ["재학", "휴학", "졸업예정"] } },
           majors: { type: "array", items: { type: "string" } },
@@ -106,7 +106,7 @@ async function classifyAndExtract(rawTitle, rawText) {
       },
     }],
     tool_choice: { type: "tool", name: "parse_posting" },
-    messages: [{ role: "user", content: `다음 공고를 분류하고, 지원에 '필수'인 자격조건만 뽑아라.\n- track: activity(대외활동·공모전·봉사) 또는 scholarship(장학·지원금)\n- category: 대외활동 / 공모전 / 봉사 / 장학 중 하나\n- track이 scholarship이면 grades/majors/regions 등은 빈 배열·null로 둬라(장학 필드는 이후 별도 처리).\n- 우대·우선 조건은 무시한다. 원문에 없는 조건은 추측하지 말고 빈 배열이나 null로 둔다.\n- 각 필드마다 근거가 된 원문 문장을 found_in_text에 그대로 담는다.\n- 확신이 낮으면 confidence를 0.5 이하로 준다.\n공고: """${rawTitle}\n${rawText}"""` }],
+    messages: [{ role: "user", content: `다음 공고를 분류하고, 지원에 '필수'인 자격조건만 뽑아라.\n- track: activity(대외활동·공모전) 또는 scholarship(장학·지원금)\n- category: 대외활동 / 공모전 / 장학 중 하나\n- track이 scholarship이면 grades/majors/regions 등은 빈 배열·null로 둬라(장학 필드는 이후 별도 처리).\n- 우대·우선 조건은 무시한다. 원문에 없는 조건은 추측하지 말고 빈 배열이나 null로 둔다.\n- 각 필드마다 근거가 된 원문 문장을 found_in_text에 그대로 담는다.\n- 확신이 낮으면 confidence를 0.5 이하로 준다.\n공고: """${rawTitle}\n${rawText}"""` }],
   });
   recordUsage(res.usage);
   const tool = res.content.find((c) => c.type === "tool_use");
