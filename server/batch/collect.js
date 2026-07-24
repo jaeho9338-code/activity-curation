@@ -12,6 +12,7 @@ import * as linkareer from "../sources/linkareer.js";
 import * as youthcenter from "../sources/youthcenter.js";
 import * as scholarship from "../sources/scholarship.js";
 import { deriveRegionFromDistrict } from "../regionLookup.js";
+import { isClubNoise } from "../noiseFilter.js";
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const today = new Date().toISOString().slice(0, 10);
@@ -161,6 +162,7 @@ async function collectLinkareer() {
         if (consecutiveExpired >= CONSECUTIVE_EXPIRED_STOP) { stop = true; break; }
         if (!it.forUniv) continue; // 청소년 전용 등 대학생 대상 아니면 수집 제외
         if (it.isNoise) continue; // 친목·스포츠레저 캐주얼 동아리(이력에 안 맞음) 제외
+        if (isClubNoise(`${it.title} ${it.org || ""}`)) continue; // 제목 기반: 동아리·소모임·스터디 부원 모집 제외(공모전·서포터즈·지원사업은 예외)
         const parseStatus = isLocalGovOrg(it.org) ? "needs_review" : "curated";
         rows.push({ title: it.title, org: it.org, category: t.category, track: "activity", source: "링커리어", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: parseStatus, eligibility: { ...base, regions: deriveRegionFromDistrict(`${it.title} ${it.org || ""}`), forUniv: true, text: "" } });
       }
