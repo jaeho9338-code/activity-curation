@@ -13,6 +13,7 @@ import * as youthcenter from "../sources/youthcenter.js";
 import * as scholarship from "../sources/scholarship.js";
 import { deriveRegionFromDistrict } from "../regionLookup.js";
 import { isClubNoise } from "../noiseFilter.js";
+import { purgeExpired } from "../scripts/purge-expired.js";
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const today = new Date().toISOString().slice(0, 10);
@@ -266,6 +267,10 @@ async function run() {
   if (error) throw error;
   console.log(`수집: 콘코 ${groups[0].length} + 위비티 ${groups[1].length} + 부산 ${groups[2].length} + 서울 ${groups[3].length} + 링커리어 ${groups[4].length} + 온통청년 ${groups[5].length} + 장학재단 ${groups[6].length} = ${all.length}건`);
   console.log(`제목 중복 ${dup}건 걸러냄. DB 신규 저장 ${data.length}건.`);
+
+  // 수집 뒤 만료(D-day 지난) 공고 정리. DB 갱신 때마다 지원 불가한 옛 공고를 지운다(방금 받은 유효 공고는 영향 없음).
+  const purged = await purgeExpired(supabase, true);
+  console.log(`만료 삭제 ${purged.count}건`, JSON.stringify(purged.bySrc));
 }
 
 run().catch((e) => { console.error("수집 실패:", e.message); process.exit(1); });
