@@ -162,7 +162,7 @@ async function collectLinkareer() {
         if (!it.forUniv) continue; // 청소년 전용 등 대학생 대상 아니면 수집 제외
         if (it.isNoise) continue; // 친목·스포츠레저 캐주얼 동아리(이력에 안 맞음) 제외
         const parseStatus = isLocalGovOrg(it.org) ? "needs_review" : "curated";
-        rows.push({ title: it.title, org: it.org, category: t.category, track: "activity", source: "링커리어", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: parseStatus, eligibility: { ...base, forUniv: true, text: "" } });
+        rows.push({ title: it.title, org: it.org, category: t.category, track: "activity", source: "링커리어", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: parseStatus, eligibility: { ...base, regions: deriveRegionFromDistrict(`${it.title} ${it.org || ""}`), forUniv: true, text: "" } });
       }
       if (stop) { console.log(`링커리어(유형${t.id}): 연속 마감 ${CONSECUTIVE_EXPIRED_STOP}건, 페이지 ${p}에서 중단`); break; }
       if (p * 20 >= totalCount) break;
@@ -192,7 +192,10 @@ async function collectYouthcenter() {
       if (consecutiveExpired >= CONSECUTIVE_EXPIRED_STOP) { stop = true; break; }
       // enrollment: 참여제외대상에 "재학생"이 있으면 졸업예정만(실측 확인). forUniv는 그대로 true로
       // 두고(온통청년 자체가 청년정책 포털이라 대학생도 기본 대상), enrollment로 더 좁힌다.
-      rows.push({ title: it.title, org: it.org, category: youthcenterCategory(it.mclsfNm), track: "activity", source: "온통청년", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: "curated", eligibility: { ...base, regions: it.regions, enrollment: it.enrollment, forUniv: true, text: it.text.slice(0, 300) } });
+      // 지역: zipCd에서 온 것(it.regions) + 제목·기관명에서 뽑은 것을 합친다. zipCd가 비어 무관([])으로
+      // 오는 경우가 많아, "광주청년..." 같은 제목의 지자체 정책이 전국으로 잘못 뜨는 걸 제목으로 보완한다.
+      const regions = [...new Set([...it.regions, ...deriveRegionFromDistrict(`${it.title} ${it.org || ""}`)])];
+      rows.push({ title: it.title, org: it.org, category: youthcenterCategory(it.mclsfNm), track: "activity", source: "온통청년", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: "curated", eligibility: { ...base, regions, enrollment: it.enrollment, forUniv: true, text: it.text.slice(0, 300) } });
     }
     if (stop) { console.log(`온통청년: 연속 마감 ${CONSECUTIVE_EXPIRED_STOP}건, 페이지 ${p}에서 중단`); break; }
     if (p * 100 >= totalCount) break;
