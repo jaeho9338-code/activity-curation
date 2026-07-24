@@ -55,9 +55,40 @@ test("시명: 순천·여수 -> 전라, 창원 -> 경상, 천안 -> 충청", () 
   assert.deepEqual(deriveRegionFromDistrict("천안시 공모"), ["충청"]);
 });
 
-// --- 겹침 함정: 잘못 넣으면 새 버그가 되는 것들은 판별 안 함 ---
-test("겹침: '고성'은 강원·경남 둘 다 있어 판별하지 않는다(빈 배열)", () => {
-  assert.deepEqual(deriveRegionFromDistrict("고성군 공모전"), []);
+// --- 겹침 함정 & 동음이의: 정밀도 우선(전국 공고를 잘못 제외하면 안 됨) ---
+// 고성은 강원 고성군 + 경남 고성군 둘 다라 '둘 다' 태그한다(양쪽 유저 다 보이게, 무관한 지역만 제외).
+test("고성군 -> 강원과 경상 둘 다 태그", () => {
+  assert.deepEqual(deriveRegionFromDistrict("제7회 고성군 공룡엑스포").sort(), ["강원", "경상"]);
+});
+
+// 세종: '세종시/세종특별자치시'만 잡는다. 세종사이버대(전국 온라인대)·세종대왕(한글)까지 잡으면 전국 공고가 제외된다.
+test("세종시/세종특별자치시 -> 충청", () => {
+  assert.deepEqual(deriveRegionFromDistrict("세종특별자치시 서예대전"), ["충청"]);
+  assert.deepEqual(deriveRegionFromDistrict("세종시 청년 서포터즈 모집"), ["충청"]);
+});
+test("세종사이버대·세종대왕은 세종시가 아니라 안 잡는다(전국 오제외 방지)", () => {
+  assert.deepEqual(deriveRegionFromDistrict("세종사이버대학교 사진공모전"), []);
+  assert.deepEqual(deriveRegionFromDistrict("2026 세종대왕 한글 창작 공모전"), []);
+});
+
+// 동음이의: 흔한 단어와 겹치는 지명은 '시/군'이 붙어야만 잡는다.
+test("동음이의(돈·나이·보석·고양이)는 시/군 없이 안 잡는다", () => {
+  assert.deepEqual(deriveRegionFromDistrict("총 사업 예산 3억, 전국 대학생 대상"), []);
+  assert.deepEqual(deriveRegionFromDistrict("고령화 사회 대응 아이디어 공모"), []);
+  assert.deepEqual(deriveRegionFromDistrict("진주 목걸이 디자인 공모"), []);
+  assert.deepEqual(deriveRegionFromDistrict("고양이 그림 그리기 대회"), []);
+});
+test("동음이의라도 시/군 붙으면 잡는다", () => {
+  assert.deepEqual(deriveRegionFromDistrict("예산군 특산물 홍보 공모"), ["충청"]);
+  assert.deepEqual(deriveRegionFromDistrict("진주시 청년 서포터즈"), ["경상"]);
+  assert.deepEqual(deriveRegionFromDistrict("고양시 청년축제 기획단"), ["경기"]);
+});
+
+// '전국'이 명시되면 개최지가 어디든 오픈이라 지역 제한이 아니다 - 무관([])으로 둔다(전국 공고 오제외 방지).
+test("'전국' 명시 공모전은 개최지로 태그하지 않는다(무관)", () => {
+  assert.deepEqual(deriveRegionFromDistrict("제27회 전국민화공모전 일반부"), []);
+  assert.deepEqual(deriveRegionFromDistrict("보령사계 전국사진공모전"), []);
+  assert.deepEqual(deriveRegionFromDistrict("제31회 지평선 전국 청소년가요제"), []);
 });
 
 test("기관 접두어(국립) 뒤 시명도 잡는다: 국립순천대학교 -> 전라", () => {
