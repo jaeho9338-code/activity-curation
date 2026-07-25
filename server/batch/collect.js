@@ -95,7 +95,9 @@ async function collectContestkorea() {
       // 뜨지 않게 확인 필요로 둔다. (애매하면 확인 필요로, 제품 결정)
       const hasRegionRestriction = /거주자|관내 거주|주민만|시민 및/.test(d.target + d.rawText) || isLocalGovOrg(d.host);
       const category = contestCategory(d.title || it.title);
-      rows.push({ title: d.title || it.title, org: d.host, category, track: category === "장학" ? "scholarship" : "activity", source: "콘테스트코리아", url: it.sourceUrl, deadline: d.deadline, posted_at: today, parse_status: hasRegionRestriction ? "needs_review" : "curated", eligibility: elig });
+      // 본문(참가조건 줄글)을 저장해 둔다. 학년·전공·재학 제한은 자유문장에만 있어 이후 LLM(parse-new.js)이 읽는다.
+      const eligibility = { ...elig, rawText: (d.rawText || "").replace(/\s+/g, " ").trim().slice(0, 1500) };
+      rows.push({ title: d.title || it.title, org: d.host, category, track: category === "장학" ? "scholarship" : "activity", source: "콘테스트코리아", url: it.sourceUrl, deadline: d.deadline, posted_at: today, parse_status: hasRegionRestriction ? "needs_review" : "curated", eligibility });
       await sleep(350);
     }
     if (stop) { console.log(`콘코: 연속 마감 ${CONSECUTIVE_EXPIRED_STOP}건, 페이지 ${p}에서 중단`); break; }
