@@ -59,10 +59,10 @@ function isLocalGovOrg(org) {
 function contestEligibility(target, body) {
   const t = (target || "").replace(/\s+/g, "");
   const forUniv = /누구나|일반인|대학생|대학원생|청년/.test(t);
-  // "영등포구민만" 처럼 한 도시에만 있는 구·군 이름이 원문에 있으면 그 시·도로 지역을 채운다(겹치는
-  // 구 이름은 regionLookup.js가 알아서 빈 배열로 둔다 - 못 맞추면 무관이 아니라 확인 필요로 가야 하니
-  // isLocalGovOrg 등 다른 안전장치가 여전히 커버한다).
-  const regions = deriveRegionFromDistrict((target || "") + " " + (body || ""));
+  // 지역은 '참가대상(target)'에서만 뽑는다. 본문(body)에는 주최지·소재·후원사가 나와서("김유정신인문학상"의
+  // 춘천, "서울현충원 공모전"의 서울) 개최지를 참가제한으로 오인해 전국 오픈 공고를 잘못 제외하게 된다.
+  // 참가대상은 "부산 거주 대학생"처럼 진짜 제한이 적히는 자리라 여기만 본다. 못 맞추면 무관(모두에게 노출).
+  const regions = deriveRegionFromDistrict(target || "");
   return { ...base, regions, forUniv, text: (target || "").replace(/\s+/g, " ").trim() };
 }
 
