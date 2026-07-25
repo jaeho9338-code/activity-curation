@@ -23,3 +23,21 @@ export function isClubNoise(text) {
   if (KEEP.test(t)) return false; // 예외 먼저: 대상 키워드 있으면 무조건 통과
   return NOISE.some((re) => re.test(t));
 }
+
+// 선정결과·합격자 발표 = 지원하는 자리가 아니라 이미 끝난 결과 공지라 노이즈.
+const RESULT = /선정\s*결과|결과\s*발표|합격자\s*발표|최종\s*선정자|당선작?\s*발표|선정자\s*발표/;
+export function isResultAnnouncement(text) {
+  return RESULT.test(text || "");
+}
+
+// 채용·계약직 등 취업 공고는 이 서비스(대외활동·공모전·장학) 범위 밖이라 노이즈.
+// 단 인턴십(대외활동성일 수 있음)·공모전·서포터즈·대외활동·장학이 있으면 안 지운다(오제외 방지).
+const JOB = /채용|계약직|기간제|정규직|아르바이트|알바/;
+// 인턴십·서포터즈는 대외활동성, 해커톤·경진대회·대회·공모는 그 자체가 기회라 '채용' 단어가 있어도 안 지운다.
+// (예: "OpenAI 채용 해커톤"은 해커톤이지 채용 공고가 아님)
+const JOB_KEEP = /인턴|공모전|서포터즈|대외활동|장학|해커톤|경진대회|대회|공모/;
+export function isJobPosting(text) {
+  const t = text || "";
+  if (JOB_KEEP.test(t)) return false;
+  return JOB.test(t);
+}

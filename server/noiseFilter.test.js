@@ -3,7 +3,7 @@
 // 원칙: 제외될 바엔 뜨는 게 낫다. 확실한 것만 노이즈로 보고, 애매하면 통과시킨다(false 반환).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isClubNoise } from "./noiseFilter.js";
+import { isClubNoise, isResultAnnouncement, isJobPosting } from "./noiseFilter.js";
 
 // --- 제외(노이즈=true): 실제 DB에 샜던 것들 ---
 test("소모임은 노이즈", () => {
@@ -58,4 +58,28 @@ test("'동아리' 단독(모집 신호 없음)은 안 지운다", () => {
 test("빈 값이면 통과(안 터짐)", () => {
   assert.equal(isClubNoise(""), false);
   assert.equal(isClubNoise(null), false);
+});
+
+// --- 선정결과 발표 = 노이즈 ---
+test("선정결과·합격발표는 노이즈", () => {
+  assert.equal(isResultAnnouncement("청년인생설계학교 2기 참여자 선정 결과 발표"), true);
+  assert.equal(isResultAnnouncement("서울청년문화패스 12회차 선정 결과 안내"), true);
+  assert.equal(isResultAnnouncement("서류심사 결과발표 및 이의신청 접수"), true);
+});
+test("선정결과 아닌 것은 통과", () => {
+  assert.equal(isResultAnnouncement("2026 부산 청년 아이디어 공모전"), false);
+  assert.equal(isResultAnnouncement("공모전 결과물 전시회 안내"), false); // '결과물'은 결과발표 아님
+});
+
+// --- 채용 공고 = 노이즈, 단 인턴·서포터즈 등은 예외 ---
+test("순수 채용·계약직은 노이즈", () => {
+  assert.equal(isJobPosting("동의대 산학협력단 제공인력 채용 공고"), true);
+  assert.equal(isJobPosting("계약직 사무보조 모집"), true);
+});
+test("인턴·서포터즈·공모전·대외활동·장학이 있으면 채용이라도 통과", () => {
+  assert.equal(isJobPosting("[보뉴랩] 채용연계형 실전 인턴십 모집"), false); // 인턴
+  assert.equal(isJobPosting("OO기업 대학생 서포터즈 채용"), false);          // 서포터즈
+  assert.equal(isJobPosting("금융비전스쿨 인턴십 모집"), false);            // 인턴
+  assert.equal(isJobPosting("2026 대학생 마케팅 공모전"), false);           // 공모전
+  assert.equal(isJobPosting("AX 인재전쟁 OpenAI 채용 해커톤"), false);      // 해커톤
 });
