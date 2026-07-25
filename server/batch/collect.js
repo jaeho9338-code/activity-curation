@@ -66,6 +66,13 @@ function contestEligibility(target, body) {
   return { ...base, regions, forUniv, text: (target || "").replace(/\s+/g, " ").trim() };
 }
 
+// 콘코는 장학금도 공모전 섹션에 섞여 온다(대표분야가 '문학·문예' 등으로 와서 분야로는 못 가른다).
+// 제목에 '장학생 선발/모집'·'장학금 신청/지원'이 있으면 장학으로. '롯데장학재단 사진공모전'처럼 후원사만
+// 장학재단인 공모전은 안 걸리게 '장학생/장학금' 뒤 동사까지 본다.
+function contestCategory(title) {
+  return /장학생\s*(선발|모집|추천)|장학금\s*(신청|지원|선발)/.test(title || "") ? "장학" : "공모전";
+}
+
 async function collectContestkorea() {
   const rows = [];
   let consecutiveExpired = 0;
@@ -87,7 +94,8 @@ async function collectContestkorea() {
       // "OO 거주자만/시민만" 같은 지역 제한 문구가 있으면, 아직 지역을 못 뽑아서(LLM 몫) 잘못 "가능"으로
       // 뜨지 않게 확인 필요로 둔다. (애매하면 확인 필요로, 제품 결정)
       const hasRegionRestriction = /거주자|관내 거주|주민만|시민 및/.test(d.target + d.rawText) || isLocalGovOrg(d.host);
-      rows.push({ title: d.title || it.title, org: d.host, category: "공모전", track: "activity", source: "콘테스트코리아", url: it.sourceUrl, deadline: d.deadline, posted_at: today, parse_status: hasRegionRestriction ? "needs_review" : "curated", eligibility: elig });
+      const category = contestCategory(d.title || it.title);
+      rows.push({ title: d.title || it.title, org: d.host, category, track: category === "장학" ? "scholarship" : "activity", source: "콘테스트코리아", url: it.sourceUrl, deadline: d.deadline, posted_at: today, parse_status: hasRegionRestriction ? "needs_review" : "curated", eligibility: elig });
       await sleep(350);
     }
     if (stop) { console.log(`콘코: 연속 마감 ${CONSECUTIVE_EXPIRED_STOP}건, 페이지 ${p}에서 중단`); break; }
