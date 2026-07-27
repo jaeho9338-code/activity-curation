@@ -107,19 +107,24 @@ async function collectContestkorea() {
 
 async function collectWevity() {
   const rows = [];
+  const seenIx = new Set();
   let consecutiveExpired = 0;
   for (let p = 1; p <= HARD_MAX_PAGES; p++) {
     let list;
     try { list = await wevity.fetchList(p); }
     catch (e) { console.log(`위비티: 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
     if (!list.length) break;
-    let stop = false;
+    let stop = false, newInPage = 0;
     for (const it of list) {
+      if (seenIx.has(it.ix)) continue; // mode=ing 뷰는 페이지가 겹쳐 나올 수 있어 ix로 중복 제거
+      seenIx.add(it.ix);
+      newInPage++;
       consecutiveExpired = isExpired(it.deadline) ? consecutiveExpired + 1 : 0;
       if (consecutiveExpired >= CONSECUTIVE_EXPIRED_STOP) { stop = true; break; }
       rows.push({ title: it.title, org: "", category: "공모전", track: "activity", source: "위비티", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: "curated", eligibility: { ...base, forUniv: true, text: `분야: ${it.cats}` } });
     }
     if (stop) { console.log(`위비티: 연속 마감 ${CONSECUTIVE_EXPIRED_STOP}건, 페이지 ${p}에서 중단`); break; }
+    if (newInPage === 0) break; // 새 공고 없는 페이지 = 더 볼 것 없음(중복 페이지 낭비 방지)
     await sleep(300);
   }
   return rows;
