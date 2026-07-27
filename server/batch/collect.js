@@ -140,7 +140,9 @@ async function collectBusan() {
     catch (e) { console.log(`부산: 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
     if (!list.length) break;
     for (const it of list) {
-      rows.push({ title: it.title, org: it.dept, category: "지자체", track: "activity", source: "부산청년플랫폼", url: it.sourceUrl, deadline: null, posted_at: it.postedAt || today, parse_status: "needs_review", eligibility: { ...base, regions: ["부산"], forUniv: true, text: `담당: ${it.dept}` } });
+      // 지역(부산)이 확실하고 대학생 대상이라 판정 가능(curated). 학년·전공 등 세부는 원문 확인 몫이지만,
+      // 안 읽은 조건은 무관으로 두는 부분판정 원칙상 공고 전체를 확인필요로 묶지 않는다(부산 유저=가능, 타지역=불가).
+      rows.push({ title: it.title, org: it.dept, category: "지자체", track: "activity", source: "부산청년플랫폼", url: it.sourceUrl, deadline: null, posted_at: it.postedAt || today, parse_status: "curated", eligibility: { ...base, regions: ["부산"], forUniv: true, text: `담당: ${it.dept}` } });
     }
     await sleep(300);
   }
@@ -157,7 +159,8 @@ async function collectSeoul() {
     catch (e) { console.log(`서울: 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
     if (!list.length) break;
     for (const it of list) {
-      rows.push({ title: it.title, org: "서울시", category: "지자체", track: "activity", source: "서울청년몽땅정보통", url: it.sourceUrl, deadline: null, posted_at: today, parse_status: "needs_review", eligibility: { ...base, regions: ["서울"], forUniv: true, text: "" } });
+      // 지역(서울) 확실 + 대학생 대상이라 판정 가능(curated). 부분판정 원칙(위 부산과 동일).
+      rows.push({ title: it.title, org: "서울시", category: "지자체", track: "activity", source: "서울청년몽땅정보통", url: it.sourceUrl, deadline: null, posted_at: today, parse_status: "curated", eligibility: { ...base, regions: ["서울"], forUniv: true, text: "" } });
     }
     await sleep(300);
   }
@@ -232,7 +235,11 @@ async function collectScholarship() {
     catch (e) { console.log(`장학재단: 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
     if (!items.length) break;
     for (const it of items) {
-      rows.push({ title: it.title, org: it.org, category: "장학", track: "scholarship", source: "한국장학재단", url: it.url, deadline: it.deadline, posted_at: today, parse_status: "needs_review", eligibility: { ...base, forUniv: true, text: it.text.slice(0, 300) } });
+      // 지역은 org에서 뽑는다(인제군장학회->강원 등 로컬 장학이 아무한테나 안 뜨게, 전국재단->무관).
+      // 성적·소득이 둘 다 '해당없음'(제한 없음)이면 판정 가능(curated). 실제 성적/소득 기준이 있으면
+      // 아직 그 값을 못 뽑으니 확인 필요로 둔다.
+      const jfNoLimit = (it.text || "").includes("성적: 해당없음") && (it.text || "").includes("소득: 해당없음");
+      rows.push({ title: it.title, org: it.org, category: "장학", track: "scholarship", source: "한국장학재단", url: it.url, deadline: it.deadline, posted_at: today, parse_status: jfNoLimit ? "curated" : "needs_review", eligibility: { ...base, regions: deriveRegionFromDistrict(`${it.title} ${it.org || ""}`), forUniv: true, text: it.text.slice(0, 300) } });
     }
     if (p * 100 >= totalCount) break;
     await sleep(300);
