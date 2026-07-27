@@ -22,6 +22,12 @@ test("스터디원 모집은 노이즈", () => {
   assert.equal(isClubNoise("INVEST UP 3기 금융투자 스터디원 모집"), true);
 });
 
+test("원데이 클래스는 노이즈", () => {
+  assert.equal(isClubNoise("맛있는 취미연구소: 불닭냉면 만들기 원데이 클래스!"), true);
+  // 단 '클래스' 단독은 노이즈 아님(청년 재정 클래스 등 legit)
+  assert.equal(isClubNoise("청년 재정 UP 클래스"), false);
+});
+
 test("동아리 + 부원/신규/신입 모집은 노이즈", () => {
   assert.equal(isClubNoise("화장품 패키지 디자인 & 기획 동아리 신규 부원 모집"), true);
   assert.equal(isClubNoise("영상 편집 동아리 [RealClip] 신입 부원 모집"), true);
