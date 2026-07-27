@@ -252,13 +252,23 @@ async function fetchAllTitles() {
 }
 
 async function run() {
+  // CLI 인자로 특정 소스만 돌릴 수 있다(예: node batch/collect.js 콘코). 없으면 전체.
   // 소스 하나가 실패해도(일시적 5xx 등) 나머지 소스가 이미 모은 건 버리지 않는다(allSettled).
-  const settled = await Promise.allSettled([collectContestkorea(), collectWevity(), collectBusan(), collectSeoul(), collectLinkareer(), collectYouthcenter(), collectScholarship()]);
-  const names = ["콘코", "위비티", "부산", "서울", "링커리어", "온통청년", "장학재단"];
-  const groups = settled.map((s, i) => {
-    if (s.status === "rejected") { console.log(`${names[i]}: 전체 실패(${s.reason?.message}), 0건으로 처리`); return []; }
-    return s.value;
-  });
+  const collectors = [
+    ["콘코", collectContestkorea], ["위비티", collectWevity], ["부산", collectBusan], ["서울", collectSeoul],
+    ["링커리어", collectLinkareer], ["온통청년", collectYouthcenter], ["장학재단", collectScholarship],
+  ];
+  const only = process.argv.slice(2);
+  const picked = only.length ? collectors.filter(([n]) => only.includes(n)) : collectors;
+  const names = picked.map(([n]) => n);
+  // 소스를 순차로 돈다(병렬 아님). 콘코는 상세를 수백 번 요청하는데, 온통청년·장학재단의 대량 다운로드와
+  // 동시에 돌면 네트워크가 포화돼 콘코 연결이 무더기로 끊긴다(fetch failed, 실측으로 확인). 순차면 콘코가
+  // 경쟁 없이 안정적이다. 한 소스가 실패해도 나머지는 계속(각자 try/catch = allSettled와 같은 내구성).
+  const groups = [];
+  for (const [name, fn] of picked) {
+    try { groups.push(await fn()); }
+    catch (e) { console.log(`${name}: 전체 실패(${e.message}), 0건으로 처리`); groups.push([]); }
+  }
   const all = groups.flat();
 
   // 소스 간 중복 제거: 이미 DB 에 있는 제목 서명 + 이번 배치 안 중복을 함께 막는다.
@@ -281,7 +291,7 @@ async function run() {
 
   const { data, error } = await supabase.from("postings").upsert(rows, { onConflict: "url", ignoreDuplicates: true }).select("id");
   if (error) throw error;
-  console.log(`수집: 콘코 ${groups[0].length} + 위비티 ${groups[1].length} + 부산 ${groups[2].length} + 서울 ${groups[3].length} + 링커리어 ${groups[4].length} + 온통청년 ${groups[5].length} + 장학재단 ${groups[6].length} = ${all.length}건`);
+  console.log(`수집: ${names.map((n, i) => `${n} ${groups[i].length}`).join(" + ")} = ${all.length}건`);
   console.log(`제목 중복 ${dup}건, 노이즈(선정결과·채용) ${noise}건 걸러냄. DB 신규 저장 ${data.length}건.`);
 
   // 수집 뒤 만료(D-day 지난) 공고 정리. DB 갱신 때마다 지원 불가한 옛 공고를 지운다(방금 받은 유효 공고는 영향 없음).
