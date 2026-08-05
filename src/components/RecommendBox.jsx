@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { fetchRecommendations } from "../recommendClient";
 import Card from "./Card";
+
+const STEPS = ["문장 이해", "지원 가능 추리기", "순위·이유"];
 
 // 자연어로 원하는 걸 쓰면 LLM이 '지원 가능한 것' 중에서 의도(경쟁률·스펙·전공무관 등)에 맞는 걸 골라준다.
 // 돌려받는 건 공고 id + 추천 이유뿐이라, 화면이 이미 가진 공고에 붙여 카드로 보여준다.
@@ -9,6 +11,15 @@ export default function RecommendBox({ postings, favorites, onToggleFav, onOpen 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null); // { profile, candidateCount, results:[{id,reason}] }
+  const [step, setStep] = useState(0);
+
+  // 로딩 5~10초 동안 "지금 뭐 하는 중"을 단계로 보여준다(Perplexity식 대기 채우기).
+  useEffect(() => {
+    if (!loading) { setStep(0); return; }
+    const t1 = setTimeout(() => setStep(1), 2500);
+    const t2 = setTimeout(() => setStep(2), 5500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [loading]);
 
   const byId = new Map(postings.map((p) => [p.id, p]));
 
@@ -49,6 +60,16 @@ export default function RecommendBox({ postings, favorites, onToggleFav, onOpen 
           {loading ? "고르는 중…" : "추천받기"}
         </button>
       </div>
+
+      {loading && (
+        <div className="ai-steps">
+          {STEPS.map((label, i) => (
+            <span key={i} className={"ai-step" + (i < step ? " done" : i === step ? " on" : "")}>
+              <span className="n">{i < step ? "✓" : i + 1}</span>{label}
+            </span>
+          ))}
+        </div>
+      )}
 
       {error && <p className="ai-error">추천을 못 받았어요: {error}</p>}
       {result && !loading && (
