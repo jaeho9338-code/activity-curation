@@ -1,19 +1,30 @@
 :root {
-  --violet: #7b5cff;
-  --violet-hover: #6a47ff;
-  --violet-50: #ede7ff;
-  --violet-chip: #e7deff;
-  --dark: #241b3d;
-  --ink: #251c40;
-  --muted: #6e6690;
-  --line: #ece6fb;
-  --green: #17b877;
-  --green-bg: #e3f7ef;
-  --amber: #f5a524;
-  --amber-bg: #fff1d9;
-  --r-card: 20px;
-  --shadow-sm: 0 4px 14px rgba(80, 50, 180, 0.08);
-  --shadow: 0 10px 28px rgba(80, 50, 180, 0.12);
+  /* 브랜드 보라 (전면 배경 아니라 액센트로만 절제해서 쓴다) */
+  --violet: #6c4dff;
+  --violet-hover: #5b3af0;
+  --violet-50: #f2eeff;
+  --violet-chip: #ede7ff;
+  --brand-line: #e4dcff;
+  --dark: #191f28;
+  /* 뉴트럴 (콘텐츠가 주인공) */
+  --page: #f6f7f9;
+  --card: #ffffff;
+  --ink: #191f28;
+  --ink-2: #4e5968;
+  --muted: #8b95a1;
+  --line: #eaecef;
+  --line-strong: #dde1e6;
+  /* 상태 3색 (정제, 의미는 유지) */
+  --green: #12b886;
+  --green-bg: #e6f8f1;
+  --amber: #f59f00;
+  --amber-bg: #fff6e5;
+  --no: #fa5252;
+  --no-bg: #ffecec;
+  /* 라운드·그림자 (덜 통통, 은은하게) */
+  --r-card: 16px;
+  --shadow-sm: 0 1px 2px rgba(23, 31, 40, 0.06);
+  --shadow: 0 1px 3px rgba(23, 31, 40, 0.08), 0 8px 24px rgba(23, 31, 40, 0.05);
 }
 
 .app {
@@ -33,66 +44,72 @@
   color: var(--muted);
 }
 
-/* 히어로: 다크 퍼플 카드, 말 거는 제목, 오른쪽 둥근 캐릭터 */
+/* 히어로: 라이트, 콘텐츠가 주인공. 규모·신선도를 신뢰 칩으로 담백하게. */
 .hero {
-  margin: 20px 0 0;
-  padding: 26px 28px;
-  background: linear-gradient(135deg, var(--dark) 0%, #3a2b63 100%);
-  border-radius: var(--r-card);
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  margin: 24px 0 0;
+  padding: 0;
 }
 .hero-text {
-  flex: 1;
   min-width: 0;
 }
 .hero-title {
-  margin: 0 0 8px;
-  font-size: 1.5rem;
+  margin: 0 0 10px;
+  font-size: 1.9rem;
   font-weight: 800;
-  line-height: 1.3;
-  letter-spacing: -0.02em;
-  color: #fff;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  color: var(--ink);
   text-wrap: balance;
 }
 .hero-sub {
-  margin: 0 0 14px;
-  font-size: 0.95rem;
+  margin: 0 0 16px;
+  font-size: 1rem;
   line-height: 1.55;
-  color: #c9bfe8;
+  color: var(--ink-2);
 }
 .hero-meta {
-  display: flex;
-  gap: 8px;
+  display: inline-flex;
+  gap: 7px;
   align-items: center;
-  flex-wrap: wrap;
+  padding: 7px 13px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+}
+.hero-meta::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
 }
 .hero-badge {
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: var(--violet);
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.83rem;
+  font-weight: 800;
+  color: var(--ink);
 }
 .hero-fresh {
-  font-size: 0.85rem;
-  color: #a99fce;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.hero-fresh::before {
+  content: "· ";
+  color: var(--muted);
 }
 @media (max-width: 520px) {
-  .hero { padding: 22px; }
-  .hero-title { font-size: 1.25rem; }
+  .hero-title { font-size: 1.5rem; }
 }
 
 /* 조건 입력 패널 */
 .panel {
-  margin: 24px 0;
+  margin: 22px 0;
   padding: 20px;
-  background: var(--violet-50);
-  border: none;
+  background: var(--card);
+  border: 1px solid var(--line);
   border-radius: var(--r-card);
+  box-shadow: var(--shadow-sm);
 }
 .fields {
   display: grid;
@@ -317,19 +334,19 @@
 }
 .card {
   padding: 18px 20px;
-  background: #fff;
-  border: none;
+  background: var(--card);
+  border: 1px solid var(--line);
   border-radius: var(--r-card);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 .card:hover {
   box-shadow: var(--shadow);
-  transform: translateY(-1px);
+  border-color: var(--line-strong);
 }
 .section.near .card {
-  border: 2px solid rgba(123, 92, 255, 0.35);
+  border: 1px solid var(--brand-line);
 }
 .card-top {
   display: flex;
@@ -607,38 +624,43 @@
 
 /* AI에게 물어보기 (자연어 추천) */
 .ai-box {
-  margin: 24px 0;
-  padding: 22px;
-  background: var(--dark);
+  margin: 22px 0;
+  padding: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
   border-radius: var(--r-card);
   box-shadow: var(--shadow);
 }
 .ai-head h3 {
   margin: 0 0 4px;
-  color: #fff;
-  font-size: 1.15rem;
+  color: var(--ink);
+  font-size: 1.05rem;
   font-weight: 800;
 }
 .ai-head p {
-  margin: 0 0 14px;
-  color: #c9bfe8;
+  margin: 0 0 12px;
+  color: var(--muted);
   font-size: 0.88rem;
 }
 .ai-input {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
-  border: none;
-  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
   font: inherit;
   font-size: 0.95rem;
   color: var(--ink);
   background: #fff;
   resize: vertical;
 }
+.ai-input::placeholder {
+  color: var(--muted);
+}
 .ai-input:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(123, 92, 255, 0.5);
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px var(--violet-50);
 }
 .ai-actions {
   display: flex;
@@ -646,13 +668,13 @@
   margin-top: 12px;
 }
 .ai-btn {
-  padding: 11px 24px;
+  padding: 11px 22px;
   background: var(--violet);
   color: #fff;
   border: none;
-  border-radius: 999px;
+  border-radius: 12px;
   font-size: 0.92rem;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
 }
 .ai-btn:hover:not(:disabled) {
@@ -662,18 +684,65 @@
   opacity: 0.5;
   cursor: default;
 }
+.ai-steps {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ai-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.ai-step:not(:first-child)::before {
+  content: "→";
+  color: var(--line-strong);
+  margin-right: 2px;
+}
+.ai-step .n {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  font-size: 0.62rem;
+  display: grid;
+  place-items: center;
+}
+.ai-step.on {
+  color: var(--violet);
+}
+.ai-step.on .n {
+  background: var(--violet);
+  color: #fff;
+  border-color: var(--violet);
+}
+.ai-step.done {
+  color: var(--ok);
+}
+.ai-step.done .n {
+  background: var(--ok);
+  color: #fff;
+  border-color: var(--ok);
+}
 .ai-error {
   margin: 14px 0 0;
-  color: #ffb3c1;
+  color: var(--no);
   font-size: 0.88rem;
+  font-weight: 600;
 }
 .ai-results {
   margin-top: 18px;
 }
 .ai-summary {
   margin: 0 0 12px;
-  color: #c9bfe8;
+  color: var(--muted);
   font-size: 0.85rem;
+  font-weight: 600;
 }
 .ai-card {
   display: flex;
@@ -683,10 +752,11 @@
   padding: 10px 14px;
   margin-bottom: -8px;
   background: var(--violet-50);
-  border-radius: 14px 14px 0 0;
-  color: var(--ink);
+  border-radius: 12px 12px 0 0;
+  color: #4a3aa8;
   font-size: 0.86rem;
-  line-height: 1.45;
+  line-height: 1.5;
+  font-weight: 600;
 }
 
 /* 하단 상태 점프 바 (스크롤 대신 상태별 섹션으로 바로 이동) */

@@ -1,6 +1,6 @@
 :root {
-  font-family: "Nunito", "Apple SD Gothic Neo", -apple-system, "Segoe UI", sans-serif;
-  line-height: 1.6;
+  font-family: -apple-system, "Pretendard", "Apple SD Gothic Neo", "Segoe UI", sans-serif;
+  line-height: 1.5;
 }
 
 * {
@@ -9,8 +9,8 @@
 
 body {
   margin: 0;
-  background: #f3f0ff;
-  color: #251c40;
+  background: #f6f7f9;
+  color: #191f28;
   -webkit-font-smoothing: antialiased;
 }
 

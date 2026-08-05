@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>대외활동 큐레이션 · 시안 (토스 톤)</title>
+<style>
+  :root{
+    /* 브랜드(보라 유지) — 액센트로만 */
+    --brand:#6C4DFF; --brand-hover:#5B3AF0; --brand-weak:#F2EEFF; --brand-line:#E4DCFF;
+    /* 뉴트럴 (콘텐츠가 주인공) */
+    --page:#F6F7F9; --card:#FFFFFF; --ink:#191F28; --ink-2:#4E5968; --ink-3:#8B95A1;
+    --line:#EAECEF; --line-strong:#DDE1E6;
+    /* 상태색(유지·정제) */
+    --ok:#12B886; --ok-weak:#E6F8F1; --ok-ink:#0B7B58;
+    --warn:#F59F00; --warn-weak:#FFF6E5; --warn-ink:#9A6700;
+    --no:#FA5252; --no-weak:#FFECEC; --no-ink:#C92A2A;
+    /* 라운드·그림자(정제) */
+    --r:16px; --r-sm:12px; --r-pill:999px;
+    --sh-sm:0 1px 2px rgba(23,31,40,.06);
+    --sh:0 1px 3px rgba(23,31,40,.08), 0 8px 24px rgba(23,31,40,.05);
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--page); color:var(--ink);
+    font-family:-apple-system,"Pretendard","Apple SD Gothic Neo","Segoe UI",sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:680px; margin:0 auto; padding:0 20px 80px}
+
+  /* 상단바 */
+  .top{position:sticky; top:0; z-index:10; background:rgba(246,247,249,.85); backdrop-filter:blur(10px);
+    display:flex; align-items:center; justify-content:space-between; padding:16px 20px; max-width:680px; margin:0 auto}
+  .logo{display:flex; align-items:center; gap:9px; font-weight:800; font-size:1.05rem; letter-spacing:-.02em}
+  .logo .mk{width:22px; height:22px; border-radius:7px; background:linear-gradient(135deg,var(--brand),#9B7CFF)}
+  .top nav{display:flex; gap:20px; font-size:.92rem; font-weight:700; color:var(--ink-2)}
+  .top nav a{color:var(--ink-2); text-decoration:none}
+  .top nav a.on{color:var(--ink)}
+
+  /* 히어로 — 차분·신뢰 */
+  .hero{padding:22px 0 8px}
+  .hero h1{font-size:1.9rem; line-height:1.25; letter-spacing:-.03em; font-weight:800}
+  .hero p{color:var(--ink-2); font-size:1rem; margin-top:10px}
+  .trust{display:inline-flex; align-items:center; gap:8px; margin-top:16px; padding:7px 12px;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--r-pill);
+    font-size:.83rem; font-weight:700; color:var(--ink-2); box-shadow:var(--sh-sm)}
+  .trust b{color:var(--ink)} .dot{width:6px; height:6px; border-radius:50%; background:var(--ok)}
+
+  /* AI 추천 — 절제된 강조 */
+  .ai{margin-top:22px; background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:18px; box-shadow:var(--sh)}
+  .ai .h{display:flex; align-items:center; gap:8px; font-weight:800; font-size:1.02rem}
+  .ai .h .tag{font-size:.68rem; font-weight:800; color:var(--brand); background:var(--brand-weak); padding:3px 8px; border-radius:6px; letter-spacing:.02em}
+  .ai .sub{color:var(--ink-3); font-size:.88rem; margin:6px 0 12px}
+  .ai .box{display:flex; gap:8px}
+  .ai input{flex:1; border:1px solid var(--line-strong); border-radius:var(--r-sm); padding:12px 14px; font:inherit; font-size:.95rem; color:var(--ink); background:#fff}
+  .ai input::placeholder{color:var(--ink-3)}
+  .ai input:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-weak)}
+  .ai .go{background:var(--brand); color:#fff; border:none; border-radius:var(--r-sm); padding:0 20px; font-weight:800; font-size:.92rem; cursor:pointer}
+  /* Perplexity식 단계 로딩 힌트 */
+  .steps{display:flex; gap:6px; margin-top:12px; font-size:.78rem; color:var(--ink-3); font-weight:700; align-items:center}
+  .steps .s{display:inline-flex; align-items:center; gap:5px}
+  .steps .s.on{color:var(--brand)}
+  .steps .s .n{width:15px; height:15px; border-radius:50%; border:1.5px solid currentColor; font-size:.6rem; display:grid; place-items:center}
+  .steps .ar{color:var(--line-strong)}
+
+  /* 필터 바 */
+  .filters{display:flex; gap:8px; margin-top:22px; flex-wrap:wrap; align-items:center}
+  .fl{display:inline-flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:var(--r-pill);
+    padding:8px 13px; font-size:.85rem; font-weight:700; color:var(--ink); cursor:pointer; box-shadow:var(--sh-sm)}
+  .fl .k{color:var(--ink-3); font-weight:600}
+  .fl.on{border-color:var(--brand-line); background:var(--brand-weak); color:var(--brand)}
+  .fl .cv{color:var(--ink-3); font-size:.75rem}
+  .more{color:var(--ink-2); font-weight:700; font-size:.85rem; background:none; border:none; cursor:pointer; margin-left:2px}
+
+  /* 요약 */
+  .summary{display:flex; gap:18px; margin:24px 2px 12px; font-size:.9rem; font-weight:800}
+  .summary span{display:inline-flex; align-items:center; gap:7px; color:var(--ink-2)}
+  .summary b{color:var(--ink)}
+  .sd{width:8px; height:8px; border-radius:50%}
+  .sd.ok{background:var(--ok)} .sd.warn{background:var(--warn)} .sd.near{background:var(--brand)}
+
+  /* 섹션 */
+  .sec{margin-top:14px}
+  .sec-h{display:flex; align-items:center; gap:8px; margin:20px 2px 12px; font-weight:800; font-size:1.05rem; letter-spacing:-.01em}
+  .sec-h .cnt{font-size:.8rem; font-weight:800; color:#fff; padding:2px 9px; border-radius:var(--r-pill)}
+  .cnt.ok{background:var(--ok)} .cnt.warn{background:var(--warn)} .cnt.near{background:var(--brand)} .cnt.no{background:var(--ink-3)}
+
+  /* 카드 */
+  .cards{display:flex; flex-direction:column; gap:10px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:16px 18px; box-shadow:var(--sh-sm); transition:.15s}
+  .card:hover{border-color:var(--line-strong); box-shadow:var(--sh)}
+  .card .row1{display:flex; align-items:center; justify-content:space-between; margin-bottom:9px}
+  .cat{font-size:.72rem; font-weight:800; color:var(--ink-2); background:#F1F3F5; padding:4px 9px; border-radius:6px}
+  .cat.대외활동{color:var(--brand); background:var(--brand-weak)}
+  .cat.공모전{color:#0B7285; background:#E3F5F8}
+  .cat.장학{color:var(--ok-ink); background:var(--ok-weak)}
+  .dday{font-size:.8rem; font-weight:800; color:var(--ink-3)}
+  .dday.urgent{color:var(--no)}
+  .card h3{font-size:1.05rem; font-weight:800; letter-spacing:-.01em; line-height:1.4}
+  .org{color:var(--ink-3); font-size:.85rem; margin-top:4px; font-weight:600}
+  .reason{margin-top:11px; padding:10px 12px; background:#F8F9FA; border-radius:var(--r-sm); font-size:.85rem; color:var(--ink-2); line-height:1.55}
+  .reason.ai{background:var(--brand-weak); color:#4A3AA8}
+  /* 거의가능 비교 */
+  .near-cmp{margin-top:11px; display:flex; align-items:center; gap:10px; font-size:.85rem}
+  .near-cmp .b{background:var(--warn-weak); color:var(--warn-ink); font-weight:800; padding:8px 12px; border-radius:var(--r-sm)}
+  .near-cmp .fix{margin-left:auto; color:var(--brand); font-weight:800; font-size:.85rem; background:var(--brand-weak); border:none; padding:8px 14px; border-radius:var(--r-pill); cursor:pointer}
+  /* 불가 사유 */
+  .reason.no{background:var(--no-weak); color:var(--no-ink)}
+  .fold{width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:14px 18px; font-weight:800; color:var(--ink-2); cursor:pointer; margin-top:10px; display:flex; justify-content:space-between}
+  .apply{display:inline-block; margin-top:11px; color:var(--brand); font-weight:800; font-size:.85rem; text-decoration:none}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="logo"><span class="mk"></span>대외활동 큐레이션</div>
+    <nav><a href="#" class="on">홈</a><a href="#">즐겨찾기</a></nav>
+  </div>
+
+  <div class="wrap">
+    <section class="hero">
+      <h1>내 조건에 맞는<br>대외활동만 골라드려요</h1>
+      <p>흩어진 공고를 다 모아, 지원할 수 있는 것만 위로 올려요.</p>
+      <span class="trust"><span class="dot"></span>7개 사이트 · <b>2,650개 공고</b> · 오늘 업데이트</span>
+    </section>
+
+    <section class="ai">
+      <div class="h"><span class="tag">AI</span>문장으로 물어보기</div>
+      <div class="sub">원하는 걸 말로 적으면, 지원 가능한 것 중에 딱 맞는 걸 골라드려요.</div>
+      <div class="box">
+        <input placeholder="예: 부산 3학년인데 경쟁률 높고 스펙되는 전공 무관 대외활동" />
+        <button class="go">추천받기</button>
+      </div>
+      <div class="steps">
+        <span class="s on"><span class="n">1</span>문장 이해</span><span class="ar">→</span>
+        <span class="s"><span class="n">2</span>지원 가능 추리기</span><span class="ar">→</span>
+        <span class="s"><span class="n">3</span>순위·이유</span>
+      </div>
+    </section>
+
+    <div class="filters">
+      <span class="fl on"><span class="k">학년</span> 3학년</span>
+      <span class="fl on"><span class="k">전공</span> 과학</span>
+      <span class="fl on"><span class="k">지역</span> 부산</span>
+      <span class="fl"><span class="k">재학</span><span class="cv">선택</span></span>
+      <button class="more">+ 장학 조건</button>
+    </div>
+
+    <div class="summary">
+      <span><span class="sd ok"></span>지원 가능 <b>12</b></span>
+      <span><span class="sd near"></span>거의 가능 <b>3</b></span>
+      <span><span class="sd warn"></span>확인 필요 <b>5</b></span>
+    </div>
+
+    <section class="sec">
+      <div class="sec-h">지원 가능 <span class="cnt ok">12</span></div>
+      <div class="cards">
+        <div class="card">
+          <div class="row1"><span class="cat 공모전">공모전</span><span class="dday urgent">D-3</span></div>
+          <h3>여름방학 금융권 취업 삼성생명 Special 금융아카데미</h3>
+          <div class="org">삼성생명 · 링커리어</div>
+          <div class="reason">전공·지역 제한 없음 · 재학생 대상. 내 조건에 모두 맞아요.</div>
+          <a class="apply" href="#">원문으로 지원하기 →</a>
+        </div>
+        <div class="card">
+          <div class="row1"><span class="cat 대외활동">대외활동</span><span class="dday">D-12</span></div>
+          <h3>외교부 공식 서포터즈 모파랑 29기 모집</h3>
+          <div class="org">외교부 · 링커리어</div>
+          <div class="reason">전공 무관 · 전국. 지원 가능해요.</div>
+          <a class="apply" href="#">원문으로 지원하기 →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-h">거의 가능 <span class="cnt near">3</span></div>
+      <div class="cards">
+        <div class="card">
+          <div class="row1"><span class="cat 장학">장학</span><span class="dday">D-20</span></div>
+          <h3>한돈장학회 2026 장학생 선발</h3>
+          <div class="org">한돈협회</div>
+          <div class="near-cmp">
+            <span class="b">학년 2·4학년 → 내 학년 3학년</span>
+            <button class="fix">조건 바꿔보기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-h">확인 필요 <span class="cnt warn">5</span></div>
+      <div class="cards">
+        <div class="card">
+          <div class="row1"><span class="cat 대외활동">대외활동</span><span class="dday">D-8</span></div>
+          <h3>2026 부산 청년 정책참여단 모집</h3>
+          <div class="org">부산광역시 · 부산청년플랫폼</div>
+          <div class="reason no" style="background:var(--warn-weak);color:var(--warn-ink)">자격요건을 자동으로 못 읽었어요. 원문에서 직접 확인하세요.</div>
+          <a class="apply" href="#">원문에서 확인 →</a>
+        </div>
+      </div>
+    </section>
+
+    <button class="fold">지원 불가 42건 <span style="color:var(--ink-3)">펼치기 ▾</span></button>
+  </div>
+</body>
+</html>
