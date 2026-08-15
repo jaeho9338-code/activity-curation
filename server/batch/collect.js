@@ -30,6 +30,12 @@ const HARD_MAX_PAGES = 15;
 // 온통청년은 상세페이지 요청 없이 한 콜에 100건씩 오는 가벼운 API라 위 상한(느린 소스 기준)을 그대로
 // 적용하면 안 된다. 실측(2649건, 20260721)보다 넉넉하게 40페이지(4000건)까지 열어둔다.
 const YOUTHCENTER_MAX_PAGES = 40;
+// 링커리어도 온통청년처럼 목록 한 방에 다 오는 가벼운 API(건당 상세요청 없음)라, 콘코용 15페이지 상한을
+// 적용하면 안 된다. 게다가 기본 정렬이 등록순이 아니라 추천/노출순이라, 앞 300건만 긁으면 뒤에 있는 굵직한
+// 공고(예: 네이버 AI 디깅클럽 #582)를 통째로 놓친다(총망라 위배). 실측 유형별 총건수(614/801/1081)를
+// 다 담게 넉넉히 30페이지(pageSize 100 = 3000건)까지 열고, 진짜 종료는 totalCount 도달로 한다.
+const LINKAREER_MAX_PAGES = 30;
+const LINKAREER_PAGE_SIZE = 100;
 const base = { grades: [], majors: [], regions: [], enrollment: [], incomeMax: null, gpaMin: null };
 
 // 마감일 문자열(YYYY-MM-DD)이 오늘보다 이전이면 지난 것. null(상시)은 안 지난 것으로 본다.
@@ -171,9 +177,9 @@ async function collectLinkareer() {
   const rows = [];
   for (const t of linkareer.TYPES) {
     let consecutiveExpired = 0;
-    for (let p = 1; p <= HARD_MAX_PAGES; p++) {
+    for (let p = 1; p <= LINKAREER_MAX_PAGES; p++) {
       let items, totalCount;
-      try { ({ items, totalCount } = await linkareer.fetchList(t.id, p, 20)); }
+      try { ({ items, totalCount } = await linkareer.fetchList(t.id, p, LINKAREER_PAGE_SIZE)); }
       catch (e) { console.log(`링커리어(유형${t.id}): 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
       let stop = false;
       for (const it of items) {
@@ -186,7 +192,7 @@ async function collectLinkareer() {
         rows.push({ title: it.title, org: it.org, category: t.category, track: "activity", source: "링커리어", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: parseStatus, eligibility: { ...base, regions: deriveRegionFromDistrict(`${it.title} ${it.org || ""}`), forUniv: true, text: "" } });
       }
       if (stop) { console.log(`링커리어(유형${t.id}): 연속 마감 ${CONSECUTIVE_EXPIRED_STOP}건, 페이지 ${p}에서 중단`); break; }
-      if (p * 20 >= totalCount) break;
+      if (p * LINKAREER_PAGE_SIZE >= totalCount) break;
       await sleep(300);
     }
   }
