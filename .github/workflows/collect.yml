@@ -24,3 +24,5 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          YOUTH_POLICY_API_KEY: ${{ secrets.YOUTH_POLICY_API_KEY }}
+          SCHOLARSHIP_API_KEY: ${{ secrets.SCHOLARSHIP_API_KEY }}
