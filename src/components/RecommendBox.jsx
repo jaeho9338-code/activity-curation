@@ -50,7 +50,7 @@ export default function RecommendBox({ postings, favorites, onToggleFav, onOpen 
       <textarea
         className="ai-input"
         rows={3}
-        placeholder="예: 부산 사는 3학년인데, 경쟁률 높고 스펙에 도움될 전공 무관 대외활동 추천해줘"
+        placeholder="예: 서울 사는 경영학과 3학년이야. 방학 동안 할 수 있는 대기업·공공기관 주관 대외활동 위주로, 경쟁률 높고 스펙에 확실히 도움될 걸 추천해줘"
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit(); }}
