@@ -10,7 +10,8 @@ import { isPast } from "../src/deadline.js";
 let _client;
 const getClient = () => (_client ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }));
 const MODEL = "gemini-3.5-flash-lite";
-const RANK_POOL = 400; // 랭킹에 넣을 후보 최대 수. 대부분(부산 대외활동 ~285건)은 다 담기고, 넘칠 때만 최신 등록순으로 자른다.
+const RANK_POOL = 600; // 랭킹에 넣을 후보 최대 수. 지원 가능 후보(실측 ~599건)를 거의 다 담아, 관련성 아닌
+// 등록일로 좋은 활동이 잘리지 않게 한다. Gemini 컨텍스트가 넉넉해 이 정도 줄 수는 무료 등급에서도 감당된다.
 
 // 1) 프롬프트 -> 프로필 + 의도. 지역·전공은 우리 canonical 값으로 강제한다.
 // 없는 값은 필드를 생략하게 둔다(Gemini enum엔 빈 문자열을 못 넣는다). 그래서 지역·재학·카테고리는
@@ -95,13 +96,20 @@ async function rankByIntent(intent, candidates, topN = 10) {
   const pool = [...candidates]
     .sort((a, b) => (b.posted_at || "").localeCompare(a.posted_at || ""))
     .slice(0, RANK_POOL);
-  const list = pool.map((c, i) => `${i}. ${c.title} | ${c.org || ""} | ${c.category}`).join("\n");
+  const list = pool.map((c, i) => `${i}. ${c.title} | ${c.org || ""} | ${c.category} | 마감 ${c.deadline || "상시"}`).join("\n");
   const res = await getClient().models.generateContent({
     model: MODEL,
     contents: `사용자가 원하는 것: "${intent}"
-아래는 사용자가 '지원 가능한' 활동 목록이다(번호. 제목 | 기관 | 카테고리). 사용자의 의도에 가장 잘 맞는 것 ${topN}개를
-골라 index와 한 줄 이유를 달아라. '경쟁률 높은/유명한/스펙에 도움'은 기관 규모(대기업·정부·유명 재단)와 활동 성격으로 판단한다.
-없는 걸 지어내지 말고 목록 번호 안에서만 고른다.
+
+아래는 사용자가 '지원 가능한' 활동 목록이다(번호. 제목 | 기관 | 카테고리 | 마감). 의도에 정말로 맞는 것만
+골라 '가장 잘 맞는 순서대로' 최대 ${topN}개를 반환한다.
+의도에 '실제로 담긴' 기준으로만 판단한다. 아래는 자주 나오는 기준이며, 의도에 없는 기준을 임의로 들이대지 않는다:
+- 의도가 "경쟁률 높은/유명한/스펙에 도움"이면 → 주최가 대기업·정부부처·공공기관·지자체·대학·유명 재단처럼 규모·공신력이 큰 곳을 우선(개인·소규모·무명은 뒤로).
+- 의도가 "좋은 경험/시야 확장/새로운 도전/다양함"이면 → 규모보다 활동 성격이 새롭고 시야를 넓혀줄 만한 것(해외·문화교류·탐방·기획·리더십·현장체험 등)을 우선한다. 규모 큰 서포터즈만 나열하지 않는다.
+- 시기 언급(방학·여름·단기)이 있으면 마감이 그 시기와 맞는 것을 우선한다.
+- 전공·분야 언급이 있으면 그 분야 활동을 우선한다.
+- 의도에 '잘 맞는' 것은 최대 ${topN}개까지 충분히 담아라(맞는 게 많으면 ${topN}개를 다 채운다). 단, 의도에 '정말 안 맞는' 것을 수를 채우려고 억지로 끼워넣지는 마라.
+없는 걸 지어내지 말고 목록 번호 안에서만 고른다. 이유는 '왜 이 의도에 맞는지'를 구체적 근거로 한 줄.
 목록:
 ${list}`,
     config: { responseMimeType: "application/json", responseSchema: RANK_SCHEMA, maxOutputTokens: 1200 },
