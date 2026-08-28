@@ -8,12 +8,26 @@ export async function loadPostings() {
   const rows = [];
   const step = 1000;
   for (let from = 0; ; from += step) {
-    const { data, error } = await supabase.from("postings").select("*").range(from, from + step - 1);
-    if (error) throw error;
+    const data = await fetchPage(from, step);
     rows.push(...data);
     if (data.length < step) break;
   }
   return rows.map(fromRow);
+}
+
+// 한 페이지를 받되, 일시적 네트워크 실패(모바일 끊김·순간 blip)로 전체 로드가 죽지 않게 몇 번 재시도한다.
+// 매번 3.6MB를 4번 나눠 받는 구조라, 재시도 없이 한 요청만 실패해도 화면이 "load failed"로 죽던 걸 막는다.
+async function fetchPage(from, step, tries = 3) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const { data, error } = await supabase.from("postings").select("*").range(from, from + step - 1);
+      if (error) throw error;
+      return data;
+    } catch (e) {
+      if (attempt >= tries) throw e;
+      await new Promise((r) => setTimeout(r, 400 * attempt)); // 짧은 백오프 후 재시도
+    }
+  }
 }
 
 // Supabase row(스네이크 케이스) -> 화면이 쓰는 모양(mock과 동일). match.js를 그대로 쓰려고 맞춘다.
