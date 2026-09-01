@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import HelpButton from "./HelpButton";
 
 // 상단 네비. NavLink는 현재 경로면 active 클래스가 붙어서 어느 화면인지 표시된다.
 export default function NavBar({ favCount }) {
@@ -10,6 +11,7 @@ export default function NavBar({ favCount }) {
         <NavLink to="/favorites" className={({ isActive }) => "nav-link" + (isActive ? " on" : "")}>
           즐겨찾기{favCount > 0 ? ` ${favCount}` : ""}
         </NavLink>
+        <HelpButton />
       </div>
     </nav>
   );

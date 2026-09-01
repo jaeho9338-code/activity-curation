@@ -593,6 +593,85 @@
   font-weight: 800;
 }
 
+/* 사용 안내 (?) */
+.help {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.help-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.help-btn:hover {
+  border-color: var(--violet);
+  color: var(--violet);
+}
+.help-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+.help-pop {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 21;
+  width: min(320px, 86vw);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+}
+.help-pop h4 {
+  margin: 0 0 12px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+.help-pop ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.help-pop li {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.help-pop b {
+  color: var(--ink);
+  font-weight: 700;
+}
+.help-pop .hl-ok {
+  color: var(--green);
+  font-weight: 700;
+}
+.help-pop .hl-review {
+  color: var(--amber);
+  font-weight: 700;
+}
+.help-pop .hl-no {
+  color: var(--no);
+  font-weight: 700;
+}
+
 /* 상세 페이지 */
 .detail-page {
   padding-top: 4px;
