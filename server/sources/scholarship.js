@@ -12,7 +12,7 @@ const BASE = `https://api.odcloud.kr/api/15028252/v1/uddi:${UUID}`;
 
 async function callApi(page, perPage) {
   const url = `${BASE}?page=${page}&perPage=${perPage}&serviceKey=${KEY}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(30000) });
   if (!res.ok) throw new Error(`장학재단 ${res.status}`);
   return res.json();
 }

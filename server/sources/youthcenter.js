@@ -49,7 +49,7 @@ function parseDeadline(aplyYmd) {
 
 async function callApi(pageNum, pageSize) {
   const url = `${BASE}/go/ythip/getPlcy?apiKeyNm=${KEY}&pageNum=${pageNum}&pageSize=${pageSize}&rtnType=json`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(30000) });
   if (!res.ok) throw new Error(`온통청년 ${res.status}`);
   const json = await res.json();
   if (json.resultCode !== 200) throw new Error(`온통청년 API 오류: ${json.resultMessage}`);

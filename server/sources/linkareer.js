@@ -18,6 +18,7 @@ async function gql(query) {
     method: "POST",
     headers: { "Content-Type": "application/json", "User-Agent": UA },
     body: JSON.stringify({ query }),
+    signal: AbortSignal.timeout(30000),
   });
   const json = await res.json();
   if (json.errors) throw new Error("링커리어 GraphQL: " + json.errors[0].message);

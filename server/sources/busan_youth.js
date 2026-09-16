@@ -9,7 +9,7 @@ const UA = "Mozilla/5.0 (compatible; ActivityCurationBot/0.1; personal project, 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function getHtml(url) {
-  const res = await fetch(url, { headers: { "User-Agent": UA } });
+  const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(30000) });
   if (!res.ok) throw new Error(`부산청년 ${res.status}: ${url}`);
   return res.text();
 }
