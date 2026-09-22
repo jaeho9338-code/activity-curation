@@ -91,7 +91,7 @@ const RANK_SCHEMA = {
   required: ["picks"],
 };
 
-async function rankByIntent(intent, candidates, topN = 10) {
+async function rankByIntent(intent, candidates, topN = 15) {
   // 상한을 넘으면 최신 등록순(posted_at 내림차순)으로 잘라, 오래된 게 먼저 밀려나고 최신 공고가 랭킹에 들어가게 한다.
   const pool = [...candidates]
     .sort((a, b) => (b.posted_at || "").localeCompare(a.posted_at || ""))
@@ -112,14 +112,14 @@ async function rankByIntent(intent, candidates, topN = 10) {
 없는 걸 지어내지 말고 목록 번호 안에서만 고른다. 이유는 '왜 이 의도에 맞는지'를 구체적 근거로 한 줄.
 목록:
 ${list}`,
-    config: { responseMimeType: "application/json", responseSchema: RANK_SCHEMA, maxOutputTokens: 1200 },
+    config: { responseMimeType: "application/json", responseSchema: RANK_SCHEMA, maxOutputTokens: 1800 },
   });
   const picks = JSON.parse(res.text).picks || [];
   return picks.map((p) => ({ ...pool[p.index], reason: p.reason })).filter((x) => x.id != null);
 }
 
 // 전체: 프롬프트 -> 프로필 -> 규칙필터 -> 랭킹. 반환: { profile, total, results:[{...posting, reason}] }
-export async function recommend(prompt, supabase, topN = 10) {
+export async function recommend(prompt, supabase, topN = 15) {
   const profile = await parsePrompt(prompt);
   const candidates = await eligibleCandidates(supabase, profile);
   const results = candidates.length ? await rankByIntent(profile.intent, candidates, topN) : [];
