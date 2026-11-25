@@ -6,7 +6,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL = "gemini-3.5-flash-lite"; // 무료 등급 lite 모델. 2.5-flash-lite는 신규 키에 막혀 3.5로. docs/데이터-수집.md 참고.
+// 무료 등급 모델. 앞 모델이 503·429로 막히면 다음 모델로 넘긴다(recommend.js와 같은 방식).
+const MODELS = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"];
 const CONFIDENCE_THRESHOLD = 0.5; // 미만이면 needs_review.
 
 // 무료 등급이라 돈은 안 새지만, 하루 1000콜 한도가 있다. 한 실행이 그걸 통째로 태우지 않게
@@ -102,15 +103,25 @@ const INSTRUCTION = `다음 공고를 분류하고, 지원에 '필수'인 자격
 // 합치면 호출 수 -> 절반, 고정 프롬프트 오버헤드(지시문 반복)도 절반으로 줄어 무료 한도를 그만큼 아낀다.
 async function classifyAndExtract(rawTitle, rawText) {
   checkBudgetOrThrow();
-  const res = await client.models.generateContent({
-    model: MODEL,
-    contents: `${INSTRUCTION}\n공고: """${rawTitle}\n${rawText}"""`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: RESPONSE_SCHEMA,
-      maxOutputTokens: 600,
-    },
-  });
+  let res, last;
+  for (const model of MODELS) {
+    try {
+      res = await client.models.generateContent({
+        model,
+        contents: `${INSTRUCTION}\n공고: """${rawTitle}\n${rawText}"""`,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: RESPONSE_SCHEMA,
+          maxOutputTokens: 4000, // 대체 모델(flash)은 생각에도 토큰을 써서 작으면 JSON이 잘린다
+        },
+      });
+      break;
+    } catch (e) {
+      last = e;
+      if (!/\b(503|429|UNAVAILABLE|RESOURCE_EXHAUSTED)\b/.test(e.message)) throw e;
+    }
+  }
+  if (!res) throw last;
   callCount += 1;
   const text = res.text;
   if (!text) throw new Error("빈 응답(형식 강제 실패). 확인 필요로 떨어뜨린다.");

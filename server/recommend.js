@@ -9,7 +9,28 @@ import { isPast } from "../src/deadline.js";
 // 클라이언트는 지연 생성한다. 모듈 로드 시점엔 아직 .env가 안 올라와 있을 수 있어서다.
 let _client;
 const getClient = () => (_client ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }));
-const MODEL = "gemini-3.5-flash-lite";
+// 503(수요 폭주)·429가 잦아 모델 하나에 묶지 않는다. 앞 모델이 막히면 다음 모델로 넘긴다(전부 무료 등급).
+const MODELS = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"];
+
+// 모델이 가끔 JSON을 중간에서 끊어 보낸다(실측 4회 중 1회). 통째로 실패시키지 말고 완성된 항목만 살린다.
+export function parsePicks(text) {
+  try { return JSON.parse(text).picks || []; } catch {
+    return [...(text || "").matchAll(/\{\s*"index"\s*:\s*(\d+)\s*,\s*"reason"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}/g)]
+      .map((m) => ({ index: Number(m[1]), reason: JSON.parse(`"${m[2]}"`) }));
+  }
+}
+
+async function generate(params) {
+  let last;
+  for (const model of MODELS) {
+    try { return await getClient().models.generateContent({ ...params, model }); }
+    catch (e) {
+      last = e;
+      if (!/\b(503|429|UNAVAILABLE|RESOURCE_EXHAUSTED)\b/.test(e.message)) throw e;
+    }
+  }
+  throw last;
+}
 const RANK_POOL = 600; // 랭킹에 넣을 후보 최대 수. 지원 가능 후보(실측 ~599건)를 거의 다 담아, 관련성 아닌
 // 등록일로 좋은 활동이 잘리지 않게 한다. Gemini 컨텍스트가 넉넉해 이 정도 줄 수는 무료 등급에서도 감당된다.
 
@@ -32,15 +53,14 @@ const PROFILE_SCHEMA = {
 };
 
 async function parsePrompt(prompt) {
-  const res = await getClient().models.generateContent({
-    model: MODEL,
+  const res = await generate({
     contents: `사용자가 자기소개와 찾고 싶은 것을 자유롭게 적었다. 프로필과 의도를 뽑아라.
 - region: 사는 지역을 위 enum 중 하나로(부산대·부산 거주 -> 부산). 물리학과 같은 전공은 majors로(과학).
 - grade: 학년 정수(3학년 -> 3), 없으면 0. income/gpa도 없으면 0.
 - category: 대외활동/공모전/장학/지자체 중 원하는 것, 안 정해졌으면 "".
 - intent: "경쟁률 높은", "스펙에 도움", "전공 무관 좋은 경험" 같은 뉘앙스를 다 담아 한두 문장으로.
 사용자 글: """${prompt}"""`,
-    config: { responseMimeType: "application/json", responseSchema: PROFILE_SCHEMA, maxOutputTokens: 400 },
+    config: { responseMimeType: "application/json", responseSchema: PROFILE_SCHEMA, maxOutputTokens: 4000 },
   });
   const p = JSON.parse(res.text);
   return {
@@ -97,8 +117,7 @@ async function rankByIntent(intent, candidates, topN = 15) {
     .sort((a, b) => (b.posted_at || "").localeCompare(a.posted_at || ""))
     .slice(0, RANK_POOL);
   const list = pool.map((c, i) => `${i}. ${c.title} | ${c.org || ""} | ${c.category} | 마감 ${c.deadline || "상시"}`).join("\n");
-  const res = await getClient().models.generateContent({
-    model: MODEL,
+  const res = await generate({
     contents: `사용자가 원하는 것: "${intent}"
 
 아래는 사용자가 '지원 가능한' 활동 목록이다(번호. 제목 | 기관 | 카테고리 | 마감). 의도에 정말로 맞는 것만
@@ -112,9 +131,9 @@ async function rankByIntent(intent, candidates, topN = 15) {
 없는 걸 지어내지 말고 목록 번호 안에서만 고른다. 이유는 '왜 이 의도에 맞는지'를 구체적 근거로 한 줄.
 목록:
 ${list}`,
-    config: { responseMimeType: "application/json", responseSchema: RANK_SCHEMA, maxOutputTokens: 1800 },
+    config: { responseMimeType: "application/json", responseSchema: RANK_SCHEMA, maxOutputTokens: 8000 },
   });
-  const picks = JSON.parse(res.text).picks || [];
+  const picks = parsePicks(res.text);
   return picks.map((p) => ({ ...pool[p.index], reason: p.reason })).filter((x) => x.id != null);
 }
 
