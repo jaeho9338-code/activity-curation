@@ -8,11 +8,17 @@ import * as contestkorea from "../sources/contestkorea.js";
 import * as wevity from "../sources/wevity.js";
 import * as busan from "../sources/busan_youth.js";
 import * as seoul from "../sources/seoul_youth.js";
+import * as gyeongbuk from "../sources/gyeongbuk_youth.js";
+import * as daegu from "../sources/daegu_youth.js";
+import * as pohang from "../sources/pohang_youth.js";
 import * as linkareer from "../sources/linkareer.js";
 import * as youthcenter from "../sources/youthcenter.js";
 import * as scholarship from "../sources/scholarship.js";
 import { deriveRegionFromDistrict } from "../regionLookup.js";
 import { isClubNoise, isResultAnnouncement, isJobPosting } from "../noiseFilter.js";
+import { isMajorCorp } from "../majorCorp.js";
+import { classifyActivity } from "../classify.js";
+import { DedupIndex } from "../dedupe.js";
 import { purgeExpired } from "../scripts/purge-expired.js";
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -82,7 +88,9 @@ function contestCategory(title) {
 async function collectContestkorea() {
   const rows = [];
   let consecutiveExpired = 0;
-  for (let p = 1; p <= HARD_MAX_PAGES; p++) {
+  // CONTEST_MAX_PAGES: 콘코는 상세 요청이 많아 오래 돌면 점점 느려지는 일이 있어, 짧게 끊어 돌릴 때 쓴다.
+  const maxPages = Number(process.env.CONTEST_MAX_PAGES) || HARD_MAX_PAGES;
+  for (let p = 1; p <= maxPages; p++) {
     let list;
     try { list = await contestkorea.fetchList(p); }
     catch (e) { console.log(`콘코: 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
@@ -173,6 +181,68 @@ async function collectSeoul() {
   return rows;
 }
 
+// 대구·경북은 생활권이 묶여 있어(사용자 지정), 두 소스 다 regions에 대구+경상을 같이 태그한다.
+// 대구 사용자도 경북청년포털을, 경북(경상) 사용자도 대구청년센터를 서로 보게 한다.
+const DAEGU_GYEONGBUK_REGIONS = ["대구", "경상"];
+
+// 포항청춘센터: 대구-경북 생활권에서 포항시 자체 공지를 추가로 붙인다(부산의 구/군 통합공지 대응 성격).
+// 목록에 마감일이 없고(등록일만) 총 게시물이 많아(287건, 20페이지) 만료 판별로 못 멈추니, 최근 것만 보게
+// 페이지 상한을 작게 둔다(실측: 한 페이지가 이미 반 년 치라 3페이지면 충분히 최신).
+async function collectPohang() {
+  const rows = [];
+  for (let p = 1; p <= 3; p++) {
+    let list;
+    try { list = await pohang.fetchList(p); }
+    catch (e) { console.log(`포항: 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
+    if (!list.length) break;
+    for (const it of list) {
+      rows.push({ title: it.title, org: "포항청춘센터", category: "지자체", track: "activity", source: "포항청춘센터", url: it.sourceUrl, deadline: null, posted_at: it.postedAt || today, parse_status: "curated", eligibility: { ...base, regions: DAEGU_GYEONGBUK_REGIONS, forUniv: true, text: "" } });
+    }
+    await sleep(300);
+  }
+  return rows;
+}
+
+// 청년e끌림(경북청년포털): 부산·서울과 달리 지원대상(policyScl)이 정책 DB 필드로 따로 와서 curated로 둔다.
+// 게시판 자체가 작아(41건, 약 5페이지) 페이지가 비면 자연히 멈춘다.
+async function collectGyeongbuk() {
+  const rows = [];
+  for (let p = 1; p <= 6; p++) {
+    let list;
+    try { list = await gyeongbuk.fetchList(p); }
+    catch (e) { console.log(`경북: 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
+    if (!list.length) break;
+    for (const it of list) {
+      rows.push({ title: it.title, org: it.org, category: "지자체", track: "activity", source: "경북청년포털", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: "curated", eligibility: { ...base, regions: DAEGU_GYEONGBUK_REGIONS, forUniv: true, text: `${it.target} ${it.content}`.replace(/\s+/g, " ").trim().slice(0, 500) } });
+    }
+    await sleep(300);
+  }
+  return rows;
+}
+
+// 대구광역시 청년센터 공지: 부산청년플랫폼의 대구 대응. 부산·서울과 달리 마감일(접수기간)이 있고 게시판이
+// 몇 년치 과거 공지까지 쌓여 있어(실측: 30페이지도 안 끝남), 절대 상한만으로는 옛 공지까지 다 긁게 된다.
+// 마감 지난 게 연속으로 나오면 멈추는 콘코 방식을 여기도 적용한다(상시=null은 안 지난 것으로 봐 카운트 리셋).
+async function collectDaegu() {
+  const rows = [];
+  let consecutiveExpired = 0;
+  for (let p = 1; p <= HARD_MAX_PAGES; p++) {
+    let list;
+    try { list = await daegu.fetchList(p); }
+    catch (e) { console.log(`대구: 목록(페이지 ${p}) 요청 실패(${e.message}), 여기까지만 수집`); break; }
+    if (!list.length) break;
+    let stop = false;
+    for (const it of list) {
+      consecutiveExpired = isExpired(it.deadline) ? consecutiveExpired + 1 : 0;
+      if (consecutiveExpired >= CONSECUTIVE_EXPIRED_STOP) { stop = true; break; }
+      rows.push({ title: it.title, org: "대구청년센터", category: "지자체", track: "activity", source: "대구청년센터", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: "curated", eligibility: { ...base, regions: DAEGU_GYEONGBUK_REGIONS, forUniv: true, text: it.period } });
+    }
+    if (stop) { console.log(`대구: 연속 마감 ${CONSECUTIVE_EXPIRED_STOP}건, 페이지 ${p}에서 중단`); break; }
+    await sleep(300);
+  }
+  return rows;
+}
+
 async function collectLinkareer() {
   const rows = [];
   for (const t of linkareer.TYPES) {
@@ -189,7 +259,9 @@ async function collectLinkareer() {
         if (it.isNoise) continue; // 친목·스포츠레저 캐주얼 동아리(이력에 안 맞음) 제외
         if (isClubNoise(`${it.title} ${it.org || ""}`)) continue; // 제목 기반: 동아리·소모임·스터디 부원 모집 제외(공모전·서포터즈·지원사업은 예외)
         const parseStatus = isLocalGovOrg(it.org) ? "needs_review" : "curated";
-        rows.push({ title: it.title, org: it.org, category: t.category, track: "activity", source: "링커리어", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: parseStatus, eligibility: { ...base, regions: deriveRegionFromDistrict(`${it.title} ${it.org || ""}`), forUniv: true, text: "" } });
+        // 대외활동 유형은 봉사·동아리를 따로 떼어낸다(동아리는 기본 숨김 카테고리).
+        const category = t.category === "대외활동" ? classifyActivity(it.title, it.org, t.id) : t.category;
+        rows.push({ title: it.title, org: it.org, category, track: "activity", source: "링커리어", url: it.sourceUrl, deadline: it.deadline, posted_at: today, parse_status: parseStatus, eligibility: { ...base, regions: deriveRegionFromDistrict(`${it.title} ${it.org || ""}`), forUniv: true, majorCorp: isMajorCorp(it.org), text: "" } });
       }
       if (stop) { console.log(`링커리어(유형${t.id}): 연속 마감 ${CONSECUTIVE_EXPIRED_STOP}건, 페이지 ${p}에서 중단`); break; }
       if (p * LINKAREER_PAGE_SIZE >= totalCount) break;
@@ -260,7 +332,7 @@ async function fetchAllTitles() {
   let from = 0;
   const step = 1000;
   while (true) {
-    const { data, error } = await supabase.from("postings").select("title").range(from, from + step - 1);
+    const { data, error } = await supabase.from("postings").select("title,deadline").range(from, from + step - 1);
     if (error) throw error;
     titles.push(...data);
     if (data.length < step) break;
@@ -274,6 +346,7 @@ async function run() {
   // 소스 하나가 실패해도(일시적 5xx 등) 나머지 소스가 이미 모은 건 버리지 않는다(allSettled).
   const collectors = [
     ["콘코", collectContestkorea], ["위비티", collectWevity], ["부산", collectBusan], ["서울", collectSeoul],
+    ["경북", collectGyeongbuk], ["대구", collectDaegu], ["포항", collectPohang],
     ["링커리어", collectLinkareer], ["온통청년", collectYouthcenter], ["장학재단", collectScholarship],
   ];
   const only = process.argv.slice(2);
@@ -292,18 +365,22 @@ async function run() {
   // 소스 간 중복 제거: 이미 DB 에 있는 제목 서명 + 이번 배치 안 중복을 함께 막는다.
   const existing = await fetchAllTitles();
   const seen = new Set(existing.map((r) => sig(r.title)));
+  // 제목 서명이 달라도(한쪽만 "[주최기관]" 붙음 등) 마감일이 같고 핵심 단어가 겹치면 같은 공고로 본다(dedupe.js).
+  const near = new DedupIndex();
+  for (const r of existing) near.add(r);
   const rows = [];
   let dup = 0, noise = 0;
   for (const r of all) {
     // 지자체·대외활동에서 선정결과·채용 공고는 지원 대상이 아니라 제외한다.
     // (공모전·장학은 소스가 분류한 걸 믿고 안 건드린다 - '채용 해커톤'·'채용연계과정' 같은 기회를 지키기 위해)
-    if (r.category === "지자체" || r.category === "대외활동") {
+    if (["지자체", "대외활동", "봉사", "동아리"].includes(r.category)) {
       const t = `${r.title} ${r.org || ""}`;
       if (isResultAnnouncement(t) || isJobPosting(t)) { noise++; continue; }
     }
     const s = sig(r.title);
-    if (s && seen.has(s)) { dup++; continue; }
+    if ((s && seen.has(s)) || near.has(r)) { dup++; continue; }
     seen.add(s);
+    near.add(r);
     rows.push(r);
   }
 
