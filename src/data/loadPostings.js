@@ -46,5 +46,6 @@ function fromRow(row) {
     parseStatus: row.parse_status,
     eligibility: row.eligibility,
     eligibilityText: row.eligibility?.text ?? row.eligibility_text ?? "",
+    majorCorp: !!row.eligibility?.majorCorp,
   };
 }

@@ -26,10 +26,16 @@ export default function HomePage() {
     .filter((a) => !c.favOnly || c.favorites.has(a.id));
 
   const { eligible, review, near, ineligible } = splitByMatch(live, c.matchProfile);
+  // 대기업 활동이 소규모 단체 서포터즈 사이에 묻힌다는 피드백으로, 정렬 전에 대기업 여부를 우선 기준으로 둔다.
   const bySort = c.sortBy === "recent"
     ? (a, b) => (a.postedAt < b.postedAt ? 1 : a.postedAt > b.postedAt ? -1 : 0)
     : (a, b) => daysLeft(a.deadline) - daysLeft(b.deadline);
-  [eligible, review, near, ineligible].forEach((arr) => arr.sort(bySort));
+  const byMajorCorpThen = (a, b) => (b.majorCorp - a.majorCorp) || bySort(a, b);
+  [eligible, review, near, ineligible].forEach((arr) => arr.sort(byMajorCorpThen));
+  // 대기업·준중형 이상 주최 활동은 별도 칸으로 뺀다(지원 불가 제외). 중복 표시를 막으려고 원래 칸에서는 뺀다.
+  const isBig = (a) => a.majorCorp && a.category !== "공모전" && a.category !== "지자체";
+  const big = [...eligible, ...review, ...near].filter(isBig).sort(bySort);
+  const notBig = (arr) => arr.filter((a) => !isBig(a));
   const total = eligible.length + review.length + near.length + ineligible.length;
 
   const openDetail = (item) => navigate(`/activity/${item.id}`);
@@ -75,9 +81,10 @@ export default function HomePage() {
             </select>
           </div>
 
-          <ResultSection id="sec-eligible" title="지원 가능" items={eligible} cls="eligible" favorites={c.favorites} onToggleFav={c.toggleFav} onOpen={openDetail} />
-          <ResultSection id="sec-review" title="확인 필요" items={review} cls="review" favorites={c.favorites} onToggleFav={c.toggleFav} onOpen={openDetail} />
-          <ResultSection id="sec-near" title="거의 가능 (조건 하나만 맞추면)" items={near} cls="near" favorites={c.favorites} onToggleFav={c.toggleFav} onOpen={openDetail} />
+          <ResultSection id="sec-big" title="대기업·준중형 이상 활동" items={big} cls="big" favorites={c.favorites} onToggleFav={c.toggleFav} onOpen={openDetail} />
+          <ResultSection id="sec-eligible" title="지원 가능" items={notBig(eligible)} cls="eligible" favorites={c.favorites} onToggleFav={c.toggleFav} onOpen={openDetail} />
+          <ResultSection id="sec-review" title="확인 필요" items={notBig(review)} cls="review" favorites={c.favorites} onToggleFav={c.toggleFav} onOpen={openDetail} />
+          <ResultSection id="sec-near" title="거의 가능 (조건 하나만 맞추면)" items={notBig(near)} cls="near" favorites={c.favorites} onToggleFav={c.toggleFav} onOpen={openDetail} />
 
           {ineligible.length > 0 && (
             <div id="sec-ineligible" className="section ineligible">

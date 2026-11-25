@@ -19,7 +19,10 @@ export default function Card({ item, fav, onToggleFav, onOpen }) {
   return (
     <article className="card" onClick={onOpen}>
       <div className="card-top">
-        <span className={"tag tag-" + item.category}>{item.category}</span>
+        <div className="card-top-left">
+          <span className={"tag tag-" + item.category}>{item.category}</span>
+          {item.majorCorp && <span className="tag tag-major">대기업</span>}
+        </div>
         <div className="card-top-right">
           <span className={"dday" + (urgent ? " urgent" : "")}>{ddayLabel(item.deadline)}</span>
           <button className={"star" + (fav ? " on" : "")} onClick={(e) => { e.stopPropagation(); onToggleFav(); }} title="즐겨찾기" aria-label="즐겨찾기">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Outlet } from "react-router-dom";
-import { CATEGORIES, DEFAULT_PROFILE } from "./constants";
+import { CATEGORIES, DEFAULT_OFF_CATEGORIES, DEFAULT_PROFILE } from "./constants";
 import { loadPostings } from "./data/loadPostings";
 import NavBar from "./components/NavBar";
 import HomePage from "./pages/HomePage";
@@ -15,7 +15,7 @@ export default function App() {
   const [showScholarship, setShowScholarship] = useState(false);
   const [query, setQuery] = useState("");
   const [applied, setApplied] = useState({ profile: DEFAULT_PROFILE, showScholarship: false, query: "" }); // "찾기" 누른 시점
-  const [cats, setCats] = useState(() => new Set(CATEGORIES));
+  const [cats, setCats] = useState(() => new Set(CATEGORIES.filter((c) => !DEFAULT_OFF_CATEGORIES.includes(c))));
   const [favOnly, setFavOnly] = useState(false);
   const [sortBy, setSortBy] = useState("deadline");
   const [favorites, setFavorites] = useState(() => {
